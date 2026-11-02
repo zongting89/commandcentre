@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lithan CLaaS²2SaaS – Command Centre</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a2e5a;--navy2:#1e3566;
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#f7f9fd;--bg4:#eef2f9;--bg5:#e6ecf7;
+  --border:#1a2e5a14;--border2:#1a2e5a24;--border3:#1a2e5a40;
+  --text:#1a2e5a;--text2:#3a5080;--text3:#7a93bc;
+  --gold:#b8960c;--gold2:#9e7f0a;--gold-bg:#b8960c12;--gold-border:#b8960c30;
+  --blue:#1a56db;--blue-bg:#1a56db0d;--blue-border:#1a56db28;
+  --green:#0a7c4e;--green-bg:#0a7c4e0d;--green-border:#0a7c4e28;
+  --red:#c0392b;--red-bg:#c0392b0d;--red-border:#c0392b28;
+  --purple:#6d3bbf;--purple-bg:#6d3bbf0d;--purple-border:#6d3bbf28;
+  --font:'Space Grotesk',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --sh1:0 1px 3px #1a2e5a0e;--sh2:0 4px 14px #1a2e5a14;--sh3:0 12px 40px #1a2e5a1e;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg)}
+
+/* ── SCREEN MANAGER ── */
+.screen{display:none;width:100%;height:100%}
+.screen.active{display:flex}
+
+/* ════════════════════════════════════
+   LOGIN SCREEN
+════════════════════════════════════ */
+#screen-login{
+  background:linear-gradient(135deg,#0d1a3a 0%,#1a2e5a 50%,#1e3566 100%);
+  flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden
+}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(#fff05 1px,transparent 1px),linear-gradient(90deg,#fff05 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.login-card{background:#fff;border-radius:20px;padding:44px 40px;width:400px;max-width:92vw;box-shadow:0 24px 80px #00000045;position:relative;z-index:1}
+.lc-logo{text-align:center;margin-bottom:30px}
+.lc-badge{display:inline-block;background:var(--navy);color:#fff;font-weight:700;font-size:11px;padding:6px 14px;border-radius:6px;letter-spacing:.8px;margin-bottom:10px}
+.lc-claas{font-size:30px;font-weight:700;color:var(--navy)}
+.lc-claas span{color:var(--gold)}
+.lc-sub{font-size:11px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-top:4px}
+.lc-title{font-size:16px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:5px}
+.lc-desc{font-size:12px;color:var(--text3);text-align:center;margin-bottom:24px;line-height:1.5}
+.ms-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s;margin-bottom:10px}
+.ms-btn:hover{background:var(--navy2);box-shadow:0 6px 20px #1a2e5a35;transform:translateY(-1px)}
+.ms-logo{display:grid;grid-template-columns:1fr 1fr;gap:2px;width:18px;height:18px;flex-shrink:0}
+.ms-logo div{border-radius:1px}
+.ms-r{background:#f35325}.ms-g{background:#81bc06}.ms-b{background:#05a6f0}.ms-y{background:#ffba08}
+.divider{display:flex;align-items:center;gap:10px;margin:14px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border2)}
+.divider span{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.5px}
+.demo-btn{width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s;margin-bottom:6px}
+.demo-btn:hover{background:var(--bg4);border-color:var(--border3)}
+.login-err{background:var(--red-bg);border:1px solid var(--red-border);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--red);margin-bottom:12px;display:none}
+.login-spin{display:none;text-align:center;padding:14px}
+.spinner{width:26px;height:26px;border:3px solid var(--border2);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.login-foot{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:18px;font-size:10px;color:var(--text3)}
+
+/* ════════════════════════════════════
+   ROLE SCREEN
+════════════════════════════════════ */
+#screen-roles{background:var(--bg);flex-direction:column;align-items:center;justify-content:center}
+.roles-card{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px;width:540px;max-width:93vw;box-shadow:var(--sh3)}
+.rc-avatar{width:50px;height:50px;border-radius:50%;background:var(--navy);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.rc-name{font-size:16px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:3px}
+.rc-email{font-size:11px;color:var(--text3);text-align:center;margin-bottom:20px}
+.rc-label{font-size:12px;color:var(--text2);text-align:center;margin-bottom:14px}
+.roles-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.role-card{background:var(--bg3);border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+.role-card:hover{border-color:var(--navy);box-shadow:var(--sh2);transform:translateY(-1px)}
+.role-card.sel{border-color:var(--blue);background:var(--blue-bg)}
+.rc-icon{font-size:26px;margin-bottom:6px}
+.rc-role{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.rc-desc{font-size:10px;color:var(--text3);line-height:1.4}
+.rc-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:6px}
+.rc-tag.full{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.rc-tag.cls{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.rc-tag.sup{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.rc-tag.lim{background:var(--gold-bg);color:var(--gold2);border:1px solid var(--gold-border)}
+.roles-go{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;opacity:.35;pointer-events:none}
+.roles-go.on{opacity:1;pointer-events:auto}
+.roles-go.on:hover{background:var(--navy2);box-shadow:var(--sh2)}
+.rc-signout{text-align:center;margin-top:10px;font-size:11px;color:var(--text3)}
+.rc-signout a{color:var(--blue);cursor:pointer}
+
+/* ════════════════════════════════════
+   DASHBOARD SCREEN
+════════════════════════════════════ */
+#screen-dashboard{flex-direction:column}
+
+/* TOPBAR */
+.topbar{height:48px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0;gap:12px}
+.t-brand{display:flex;align-items:center;gap:10px}
+.t-badge{background:var(--gold);color:#fff;font-weight:700;font-size:10px;padding:4px 8px;border-radius:4px;letter-spacing:.8px;flex-shrink:0}
+.t-title{font-size:14px;font-weight:600;color:#fff}
+.t-sub{font-size:10px;color:#ffffff60;margin-top:1px}
+.t-center{font-size:11px;font-weight:700;letter-spacing:3px;color:#ffffff40;text-transform:uppercase}
+.t-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.t-clock{font-family:var(--mono);font-size:10px;color:#ffffffaa;text-align:right;line-height:1.5}
+.t-lava{display:flex;align-items:center;gap:5px;background:#ffffff12;border:1px solid #ffffff25;padding:4px 10px;border-radius:16px}
+.t-lava-dot{width:6px;height:6px;background:#4ade80;border-radius:50%;animation:gpulse 2s infinite}
+@keyframes gpulse{0%,100%{box-shadow:0 0 0 0 #4ade8050}60%{box-shadow:0 0 0 4px #4ade8000}}
+.t-lava span{font-size:10px;color:#4ade80;font-weight:700;letter-spacing:.4px}
+/* User chip */
+.t-user{display:flex;align-items:center;gap:6px;background:#ffffff12;border:1px solid #ffffff20;border-radius:18px;padding:3px 10px 3px 4px;cursor:pointer;transition:all .15s;position:relative;user-select:none}
+.t-user:hover,.t-user.open{background:#ffffff22}
+.t-uavatar{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.t-uname{font-size:11px;color:#fff;font-weight:600}
+.t-urole{font-size:9px;font-weight:700;padding:1px 6px;border-radius:7px}
+.t-urole.PM{background:#b8960c28;color:#ffd460}
+.t-urole.LF{background:#1a56db28;color:#90b8ff}
+.t-urole.LA{background:#6d3bbf28;color:#c4a8ff}
+.t-urole.LS{background:#0a7c4e28;color:#6debb4}
+.t-chevron{font-size:9px;color:#ffffff70;margin-left:2px;transition:transform .2s}
+.t-user.open .t-chevron{transform:rotate(180deg)}
+/* User dropdown */
+.u-dd{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:6px;box-shadow:var(--sh3);min-width:190px;z-index:300}
+.u-dd.open{display:block;animation:ddIn .15s ease}
+@keyframes ddIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.u-dd-head{padding:10px 12px 8px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.u-dd-name{font-size:12px;font-weight:700;color:var(--navy)}
+.u-dd-email{font-size:10px;color:var(--text3);margin-top:1px}
+.u-dd-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .15s}
+.u-dd-item:hover{background:var(--bg4);color:var(--navy)}
+.u-dd-item.danger:hover{background:var(--red-bg);color:var(--red)}
+.u-dd-sep{height:1px;background:var(--border);margin:4px 0}
+
+/* BODY LAYOUT */
+.body-layout{flex:1;display:flex;overflow:hidden;min-height:0}
+
+/* ════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════ */
+.sidebar{width:216px;background:var(--bg2);border-right:1px solid var(--border2);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;overflow-x:hidden}
+.sidebar::-webkit-scrollbar{width:2px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border2)}
+/* sections */
+.sb-sec{padding:8px 0}
+.sb-sec-lbl{font-size:9px;font-weight:700;letter-spacing:1.8px;color:var(--text3);padding:0 14px 5px;text-transform:uppercase}
+.sb-grp-head{display:flex;align-items:center;justify-content:space-between;padding:0 10px 4px 14px}
+.sb-grp-name{font-size:9px;font-weight:700;letter-spacing:1.8px;color:var(--text3);text-transform:uppercase}
+.sb-grp-btns{display:flex;gap:1px}
+.sb-grp-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:1px 4px;border-radius:3px;transition:all .15s;line-height:1;opacity:.5}
+.sb-grp-btn:hover{background:var(--bg4);color:var(--navy);opacity:1}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;color:var(--text2);font-size:12px;font-weight:500;transition:all .15s;border-right:2px solid transparent;position:relative}
+.sb-item-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 2px;border-radius:3px;line-height:1;opacity:0;transition:all .15s;flex-shrink:0;margin-left:2px}
+.sb-item:hover .sb-item-rm{opacity:.6}
+.sb-item-rm:hover{opacity:1 !important;color:var(--red);background:var(--red-bg)}
+.sb-item:hover{background:var(--bg4);color:var(--navy)}
+.sb-item.active{background:var(--blue-bg);color:var(--blue);border-right-color:var(--blue)}
+.sb-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sb-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:7px;background:var(--red);color:#fff;flex-shrink:0}
+.sb-badge.amber{background:var(--gold)}
+.sb-pbi{font-size:8px;font-weight:700;color:var(--gold2);background:var(--gold-bg);border:1px solid var(--gold-border);padding:1px 4px;border-radius:3px;flex-shrink:0}
+.sb-divider{height:1px;background:var(--border);margin:2px 12px}
+.sb-add-item{display:flex;align-items:center;gap:5px;padding:5px 14px 8px;font-size:11px;color:var(--text3);cursor:pointer;transition:all .15s}
+.sb-add-item:hover{color:var(--blue)}
+.sb-add-group{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;transition:color .15s}
+.sb-add-group:hover{color:var(--blue)}
+.sb-footer{margin-top:auto;padding:12px 12px;border-top:1px solid var(--border)}
+.lava-btn{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--navy);border-radius:8px;cursor:pointer;transition:all .2s}
+.lava-btn:hover{background:var(--navy2)}
+.lava-btn-icon{font-size:15px}
+.lava-btn-text{font-size:11px;color:#fff;font-weight:600}
+
+/* ════════════════════════════════════
+   MAIN CONTENT AREA
+════════════════════════════════════ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* MAIN CONTENT SWITCHER — shows either dashboard cards or PBI embed */
+.main-view{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.view-panel{display:none;flex:1;flex-direction:column;overflow:hidden}
+.view-panel.active{display:flex}
+
+/* PBI VIEW */
+.pbi-view-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--navy);flex-shrink:0}
+.pbi-view-left{display:flex;align-items:center;gap:10px}
+.pbi-view-icon{font-size:18px}
+.pbi-view-title{font-size:13px;font-weight:700;color:#fff}
+.pbi-view-sub{font-size:10px;color:#ffffff60;margin-top:1px}
+.pbi-view-right{display:flex;align-items:center;gap:8px}
+.pbi-view-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;background:#ffffff15;border:1px solid #ffffff25;border-radius:6px;color:#fff;font-size:11px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.pbi-view-btn:hover{background:#ffffff25}
+.pbi-back{background:none;border:none;color:#ffffffaa;cursor:pointer;font-size:11px;font-family:var(--font);display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;transition:all .15s}
+.pbi-back:hover{background:#ffffff15;color:#fff}
+.pbi-iframe-wrap{flex:1;position:relative;background:#f0f4fa;overflow:hidden}
+.pbi-iframe{width:100%;height:100%;border:none;display:block}
+/* placeholder shown before real URL is set */
+.pbi-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center}
+.pbi-ph-icon{font-size:64px;margin-bottom:4px}
+.pbi-ph-title{font-size:20px;font-weight:700;color:var(--navy)}
+.pbi-ph-desc{font-size:12px;color:var(--text3);max-width:440px;line-height:1.7}
+.pbi-ph-url-box{display:flex;flex-direction:column;gap:8px;width:100%;max-width:520px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:18px}
+.pbi-ph-url-label{font-size:11px;font-weight:700;color:var(--text2);text-align:left}
+.pbi-ph-url-input{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--text);font-family:var(--font);outline:none}
+.pbi-ph-url-input:focus{border-color:var(--blue)}
+.pbi-ph-url-input::placeholder{color:var(--text3)}
+.pbi-ph-url-row{display:flex;gap:8px}
+.pbi-ph-save{padding:8px 18px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;white-space:nowrap}
+.pbi-ph-save:hover{background:var(--navy2)}
+.pbi-ph-note{font-size:10px;color:var(--text3);text-align:left;line-height:1.5}
+.pbi-ph-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gold-bg);border:1px solid var(--gold-border);padding:6px 14px;border-radius:16px;font-size:11px;color:var(--gold2);font-weight:600}
+
+/* DASHBOARD CARDS VIEW */
+.dash-view{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.dash-view::-webkit-scrollbar{width:3px}
+.dash-view::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* Role banner */
+.role-banner{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-radius:9px;border:1px solid;flex-shrink:0}
+.role-banner.PM{background:var(--gold-bg);border-color:var(--gold-border);color:var(--gold2)}
+.role-banner.LF{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
+.role-banner.LA{background:var(--purple-bg);border-color:var(--purple-border);color:var(--purple)}
+.role-banner.LS{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.rb-l{font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+.rb-r{font-size:10px;opacity:.65}
+
+/* KPI cards */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;flex-shrink:0}
+.kpi-card{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:14px 13px 12px;cursor:pointer;transition:all .2s;box-shadow:var(--sh1)}
+.kpi-card:hover{border-color:var(--blue);transform:translateY(-1px);box-shadow:var(--sh2)}
+.kpi-bar{height:3px;margin:-14px -13px 10px;border-radius:10px 10px 0 0}
+.kpi-bar.green{background:linear-gradient(90deg,var(--green),#1aaa7a)}
+.kpi-bar.blue{background:linear-gradient(90deg,var(--blue),#2a7edf)}
+.kpi-bar.gold{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.kpi-bar.red{background:linear-gradient(90deg,var(--red),#a02020)}
+.kpi-bar.purple{background:linear-gradient(90deg,var(--purple),#5a2daa)}
+.kpi-lbl{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+.kpi-val{font-size:26px;font-weight:700;font-family:var(--mono);line-height:1;margin-bottom:4px}
+.kpi-val.green{color:var(--green)}.kpi-val.blue{color:var(--blue)}.kpi-val.gold{color:var(--gold)}.kpi-val.red{color:var(--red)}.kpi-val.purple{color:var(--purple)}
+.kpi-trend{font-size:10px;font-weight:600;margin-bottom:6px}
+.kpi-trend.up{color:var(--green)}.kpi-trend.down{color:var(--red)}.kpi-trend.warn{color:var(--gold)}
+.kpi-target{font-size:9px;color:var(--text3);margin-bottom:5px}
+.prog{height:3px;background:var(--bg5);border-radius:2px;overflow:hidden}
+.prog-f{height:100%;border-radius:2px}
+
+/* Mid panels */
+.mid-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;flex:1;min-height:0}
+.panel{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:14px;display:flex;flex-direction:column;overflow:hidden;min-height:0;box-shadow:var(--sh1)}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0}
+.ph-title{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--navy);text-transform:uppercase}
+.ph-link{font-size:10px;color:var(--text3);cursor:pointer;transition:color .15s}
+.ph-link:hover{color:var(--blue)}
+.mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;flex-shrink:0}
+.ms{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.ms-lbl{font-size:8px;color:var(--text3);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.ms-val{font-size:22px;font-weight:700;font-family:var(--mono);line-height:1}
+.ms-val.gold{color:var(--gold)}.ms-val.blue{color:var(--blue)}.ms-val.red{color:var(--red)}.ms-val.green{color:var(--green)}
+.ms-sub{font-size:9px;color:var(--text3);margin-top:2px}
+.sec-lbl{font-size:8px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:5px;flex-shrink:0}
+.scroll-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.scroll-list::-webkit-scrollbar{width:2px}
+.task-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg4);border-radius:6px;border:1px solid var(--border)}
+.ti-time{font-family:var(--mono);font-size:10px;color:var(--text3);min-width:36px;flex-shrink:0}
+.ti-text{flex:1;font-size:11px;color:var(--text)}
+.ti-pri{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0}
+.ti-pri.urgent{background:var(--red);color:#fff;animation:urg 1.5s infinite}
+.ti-pri.high{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.ti-pri.med{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
+.ti-pri.low{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+@keyframes urg{0%,100%{opacity:1}50%{opacity:.6}}
+.ci{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg4);border-radius:6px;border:1px solid var(--border);gap:8px}
+.ci-name{font-size:11px;font-weight:600;color:var(--text);margin-bottom:1px}
+.ci-meta{font-size:10px;color:var(--text3)}
+.ci-tag{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;flex-shrink:0}
+.ci-tag.on{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.ci-tag.risk{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
+.ci-tag.low{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.alert-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:7px;border:1px solid}
+.alert-item.crit{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.alert-item.warn{background:var(--gold-bg);border-color:var(--gold-border);color:var(--gold2)}
+.alert-item.info{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
+.alert-item.good{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.ai-ico{font-size:13px;flex-shrink:0;margin-top:1px}
+.ai-txt{font-size:11px;color:var(--text);line-height:1.4}
+.ai-meta{font-size:9px;color:var(--text3);margin-top:2px}
+/* tabs */
+.tabs{display:flex;gap:4px;margin-bottom:8px;flex-shrink:0}
+.tab-btn{padding:4px 10px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border2);color:var(--text3);background:none;transition:all .15s;font-family:var(--font)}
+.tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tab-btn:hover:not(.active){border-color:var(--navy);color:var(--navy)}
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-shrink:0}
+.dleg{flex:1;display:flex;flex-direction:column;gap:4px}
+.dleg-row{display:flex;align-items:center;justify-content:space-between;font-size:11px}
+.dleg-l{display:flex;align-items:center;gap:6px}
+.dleg-dot{width:7px;height:7px;border-radius:50%}
+.dleg-lbl{color:var(--text2)}
+.dleg-val{font-weight:700;font-family:var(--mono);font-size:11px}
+
+/* QUICK ACCESS */
+.qa-bar{display:flex;align-items:center;gap:7px;padding:9px 14px;background:var(--bg2);border-top:1px solid var(--border2);flex-shrink:0;flex-wrap:wrap}
+.qa-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--font)}
+.qa-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+
+/* ════════════════════════════════════
+   Checkonit PANEL
+════════════════════════════════════ */
+.lava-panel{width:280px;background:var(--bg2);border-left:1px solid var(--border2);display:flex;flex-direction:column;flex-shrink:0}
+.lp-head{padding:12px 14px;background:var(--navy);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.lp-orb{width:32px;height:32px;border-radius:50%;background:conic-gradient(from 0deg,#4a9eff,#a78bfa,#22d3ee,#4a9eff);display:flex;align-items:center;justify-content:center;animation:spin 8s linear infinite;flex-shrink:0}
+.lp-orb-inner{width:22px;height:22px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#22d3ee;font-family:var(--mono)}
+.lp-name{font-size:12px;font-weight:700;color:#fff}
+.lp-stat{font-size:9px;color:#ffffff65;margin-top:1px}
+.lp-msgs{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:7px;background:var(--bg3)}
+.lp-msgs::-webkit-scrollbar{width:2px}
+.lp-msg{display:flex;flex-direction:column;gap:2px}
+.lp-sender{font-size:8px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase}
+.lp-msg.user .lp-sender{text-align:right;color:var(--blue)}
+.lp-bubble{padding:8px 10px;font-size:11px;line-height:1.55;border:1px solid}
+.lp-msg.bot .lp-bubble{background:var(--bg2);border-color:var(--border2);color:var(--text);border-radius:6px 10px 10px 6px;box-shadow:var(--sh1)}
+.lp-msg.user .lp-bubble{background:var(--blue-bg);border-color:var(--blue-border);color:var(--navy);align-self:flex-end;max-width:90%;border-radius:10px 6px 6px 10px}
+.lp-typing{display:flex;align-items:center;gap:4px;padding:9px 11px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px 10px 10px 6px;width:fit-content}
+.lp-typing span{width:5px;height:5px;background:var(--blue);border-radius:50%;animation:td .8s infinite}
+.lp-typing span:nth-child(2){animation-delay:.2s}
+.lp-typing span:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,100%{opacity:.2;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.lp-input-area{padding:9px 11px;border-top:1px solid var(--border2);display:flex;flex-direction:column;gap:6px;background:var(--bg2);flex-shrink:0}
+.lp-chips{display:flex;flex-wrap:wrap;gap:4px}
+.lp-chip{background:var(--bg4);border:1px solid var(--border2);color:var(--text2);font-size:10px;padding:3px 8px;border-radius:11px;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.lp-chip:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.lp-row{display:flex;gap:6px;align-items:flex-end}
+.lp-input{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;color:var(--text);font-size:11px;font-family:var(--font);outline:none;resize:none;min-height:32px;max-height:76px;line-height:1.4}
+.lp-input:focus{border-color:var(--blue)}
+.lp-input::placeholder{color:var(--text3)}
+.lp-send{background:var(--navy);border:none;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:13px;transition:all .15s;flex-shrink:0}
+.lp-send:hover{background:var(--blue)}
+
+/* ════════════════════════════════════
+   ADD ITEM MODAL
+════════════════════════════════════ */
+.modal-overlay{display:none;position:fixed;inset:0;background:#1a2e5a55;z-index:500;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex;animation:fIn .15s ease}
+@keyframes fIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--bg2);border-radius:14px;width:380px;max-height:72vh;display:flex;flex-direction:column;box-shadow:var(--sh3);overflow:hidden}
+.modal-head{padding:15px 18px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-head-title{font-size:13px;font-weight:700;color:#fff}
+.modal-head-sub{font-size:10px;color:#ffffff60;margin-top:1px}
+.modal-x{background:none;border:none;color:#ffffff80;cursor:pointer;font-size:20px;padding:0;line-height:1;transition:color .15s}
+.modal-x:hover{color:#fff}
+.modal-search{padding:11px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-search input{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:7px;padding:8px 12px;font-size:12px;color:var(--text);font-family:var(--font);outline:none}
+.modal-search input:focus{border-color:var(--blue)}
+.modal-search input::placeholder{color:var(--text3)}
+.modal-list{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
+.modal-list::-webkit-scrollbar{width:3px}
+.modal-cat-lbl{font-size:9px;font-weight:700;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase;padding:6px 2px 3px;margin-top:2px}
+.modal-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s}
+.modal-item:hover{border-color:var(--blue-border);background:var(--blue-bg)}
+.modal-item.in{background:var(--blue-bg);border-color:var(--blue-border)}
+.mi-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.mi-body{flex:1;min-width:0}
+.mi-name{font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-desc{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.mi-pbi{font-size:8px;font-weight:700;color:var(--gold2);background:var(--gold-bg);border:1px solid var(--gold-border);padding:1px 4px;border-radius:3px;margin-left:4px;vertical-align:middle}
+.mi-btn{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.mi-btn-add{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.mi-btn-rm{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.modal-foot{padding:11px 14px;border-top:1px solid var(--border);background:var(--bg3);flex-shrink:0}
+.modal-done{width:100%;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s}
+.modal-done:hover{background:var(--navy2)}
+
+/* ════════════════════════════════════
+   PBI URL MANAGER MODAL
+════════════════════════════════════ */
+.url-modal{display:none;position:fixed;inset:0;background:#1a2e5a55;z-index:600;align-items:center;justify-content:center}
+.url-modal.open{display:flex;animation:fIn .15s ease}
+.url-box{background:var(--bg2);border-radius:14px;width:560px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--sh3);overflow:hidden}
+.url-head{padding:15px 18px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.url-head-title{font-size:13px;font-weight:700;color:#fff}
+.url-x{background:none;border:none;color:#ffffff80;cursor:pointer;font-size:20px;padding:0;line-height:1}
+.url-x:hover{color:#fff}
+.url-body{flex:1;overflow-y:auto;padding:20px}
+.url-list{display:flex;flex-direction:column;gap:10px}
+.url-item{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px}
+.url-item-name{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.url-item-input{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--text);font-family:var(--mono);outline:none;margin-bottom:5px}
+.url-item-input:focus{border-color:var(--blue)}
+.url-item-hint{font-size:10px;color:var(--text3);line-height:1.5}
+.url-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--bg3)}
+.url-save{flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s}
+.url-save:hover{background:var(--navy2)}
+.url-cancel{padding:9px 18px;background:none;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--font)}
+
+/* ── AUTO TASK ENGINE UI ── */
+.task-source-note{font-size:10px;color:var(--text3);background:var(--green-bg);border:1px solid var(--green-border);border-radius:6px;padding:5px 10px;margin-bottom:8px;flex-shrink:0;display:flex;align-items:center;gap:5px}
+.task-filter-tabs{display:flex;gap:4px;margin-bottom:8px;flex-shrink:0}
+.tf-tab{padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border2);color:var(--text3);background:none;transition:all .15s;font-family:var(--font);white-space:nowrap}
+.tf-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tf-tab:hover:not(.active){border-color:var(--navy);color:var(--navy)}
+.auto-task-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.auto-task-list::-webkit-scrollbar{width:2px}
+.auto-task-list::-webkit-scrollbar-thumb{background:var(--border2)}
+.auto-task-item{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 11px;transition:all .15s;display:flex;flex-direction:column;gap:5px}
+.auto-task-item:hover{border-color:var(--border2);box-shadow:var(--sh1)}
+.at-top{display:flex;align-items:center;gap:6px}
+.at-icon{font-size:14px;flex-shrink:0}
+.at-cat{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.3px}
+.at-pri{font-size:9px;font-weight:700;margin-left:auto;letter-spacing:.5px}
+.at-txt{font-size:11px;color:var(--text);line-height:1.5;font-weight:500}
+.at-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:1px}
+.at-src{font-size:9px;color:var(--text3)}
+.at-done-btn{font-size:10px;font-weight:600;color:var(--blue);background:var(--blue-bg);border:1px solid var(--blue-border);padding:3px 9px;border-radius:5px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.at-done-btn:hover{background:var(--blue);color:#fff}
+.at-done-btn:disabled{opacity:.4;cursor:not-allowed}
+.no-tasks{text-align:center;padding:24px;font-size:12px;color:var(--green);font-weight:600}
+
+
+/* ═══ V7 — customisable home ═══ */
+.home-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 12px;border-radius:9px;border:1px solid var(--border2);background:var(--bg2);flex-shrink:0;font-size:12px;color:var(--text2)}
+.home-bar.edit{background:var(--gold-bg);border-color:var(--gold-border);color:var(--gold2)}
+.hb-l strong{color:var(--navy)}
+.hb-r{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hb-mode{font-size:10px;color:var(--text3);margin-right:4px}
+.hb-btn{padding:5px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap}
+.hb-btn:hover{border-color:var(--navy);background:var(--bg4)}
+.hb-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.hb-btn.primary:hover{background:var(--navy2)}
+.hb-btn.warn{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.kpi-row{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kcell,.wcell{position:relative;min-width:0}
+.kcell{display:flex}.kcell>.kpi-card{flex:1}
+.wgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:290px;grid-auto-flow:dense;gap:10px;flex:none}
+.wcell{display:flex;min-height:0}
+.wcell>.panel{flex:1;min-width:0}
+.kcell.editing .kpi-card,.wcell.editing>.panel{outline:2px dashed var(--gold-border);outline-offset:2px}
+.wctl{position:absolute;top:6px;right:6px;z-index:5;display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border3);border-radius:7px;padding:3px;box-shadow:var(--sh2)}
+.wctl.k{top:4px;right:4px}
+.wctl button{background:var(--bg4);border:none;border-radius:4px;padding:3px 7px;font-size:10px;font-weight:700;color:var(--navy);cursor:pointer;font-family:var(--font)}
+.wctl button:hover:not(:disabled){background:var(--navy);color:#fff}
+.wctl button:disabled{opacity:.3;cursor:default}
+.wctl button.del:hover{background:var(--red);color:#fff}
+.empty-slot{display:flex;align-items:center;justify-content:center;padding:26px;border:2px dashed var(--border3);border-radius:10px;color:var(--text3);font-size:12px}
+.note-area{flex:1;width:100%;resize:none;border:1px solid var(--border2);border-radius:7px;padding:9px;font-family:var(--font);font-size:12px;color:var(--text);background:var(--bg3);outline:none}
+.note-area:focus{border-color:var(--blue)}
+.pbi-sel{max-width:60%;font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--bg3);color:var(--navy);font-family:var(--font)}
+.pbi-tile-frame{flex:1;width:100%;border:1px solid var(--border2);border-radius:7px;min-height:0;background:#f0f4fa}
+.pbi-tile-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;font-size:10px;color:var(--text3)}
+.pbi-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:12px;color:var(--text3);padding:10px;gap:4px}
+.pbi-tile-row{display:flex;gap:6px;width:100%;max-width:420px;margin-top:8px}
+.modal-item.pk{cursor:pointer}
+.modal-item.pk.used{opacity:.55;background:var(--blue-bg);border-color:var(--blue-border)}
+.pk-ic{font-size:16px;width:24px;text-align:center;flex-shrink:0}
+.pk-tx{flex:1;min-width:0}
+.pk-t{font-size:12px;font-weight:700;color:var(--navy)}
+.pk-d{font-size:10px;color:var(--text3)}
+.pk-st{font-size:10px;font-weight:700;color:var(--blue);white-space:nowrap}
+/* assistant slot */
+.lava-panel{transition:width .2s}
+.lava-panel.wide{width:380px}
+.lp-head{position:relative}
+.lp-gear{margin-left:auto;background:#ffffff20;border:none;color:#fff;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px}
+.lp-gear:hover{background:#ffffff40}
+.lava-builtin,.lava-embed{flex:1;min-height:0;flex-direction:column}
+.lava-builtin{display:flex}
+.lava-embed{display:none}
+.embed-bar{display:flex;justify-content:space-between;gap:6px;padding:6px 8px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.embed-frame{flex:1;width:100%;border:none;background:#fff}
+.embed-note{padding:6px 10px;font-size:9px;color:var(--text3);background:var(--bg3);border-top:1px solid var(--border);line-height:1.4}
+.as-body{padding:16px 18px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text2)}
+.as-body label{font-weight:700;color:var(--navy);font-size:11px}
+.as-body input,.as-body select{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;background:var(--bg4);font-size:12px;font-family:var(--font);color:var(--text);outline:none}
+.as-note{font-size:10px;line-height:1.5;color:var(--text3);background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:7px;padding:8px 10px}
+.as-err{color:var(--red);font-size:11px;min-height:14px}
+@media(max-width:1100px){.wgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.wcell{grid-column:auto!important}}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="screen-login" class="screen">
+  <div class="login-grid"></div>
+  <div class="login-card">
+    <div class="lc-logo">
+      <div class="lc-badge">LITHAN</div>
+      <div class="lc-claas">CLaaS<span>2</span>SaaS</div>
+      <div class="lc-sub">Programme Command Centre</div>
+    </div>
+    <div class="lc-title">Welcome back</div>
+    <div class="lc-desc">Sign in with your Lithan or EduClaas Microsoft 365 account</div>
+    <div class="login-err" id="login-err"></div>
+    <div id="login-form">
+      <button class="ms-btn" onclick="msalLogin()">
+        <div class="ms-logo"><div class="ms-r"></div><div class="ms-g"></div><div class="ms-b"></div><div class="ms-y"></div></div>
+        Sign in with Microsoft 365
+      </button>
+      <div class="divider"><span>OR DEMO</span></div>
+      <button class="demo-btn" onclick="demoLogin('PM')">📊 Demo as Programme Manager (PM)</button>
+      <button class="demo-btn" onclick="demoLogin('LF')" style="margin-top:5px">👩‍🏫 Demo as Learning Facilitator (LF)</button>
+      <button class="demo-btn" onclick="demoLogin('LA')" style="margin-top:5px">🎓 Demo as Learning Associate (LA)</button>
+      <button class="demo-btn" onclick="demoLogin('LS')" style="margin-top:5px">🛠️ Demo as Learning Support (LS)</button>
+    </div>
+    <div class="login-spin" id="login-spin">
+      <div class="spinner"></div>
+      <p style="font-size:11px;color:var(--text3)">Authenticating with Microsoft 365…</p>
+    </div>
+    <div class="login-foot">🔒 Secured by Microsoft Entra ID · PDPA Compliant</div>
+  </div>
+</div>
+
+<!-- ══ ROLE SELECT ══ -->
+<div id="screen-roles" class="screen">
+  <div class="roles-card">
+    <div class="rc-avatar" id="rc-avatar">?</div>
+    <div class="rc-name" id="rc-name">Welcome</div>
+    <div class="rc-email" id="rc-email">–</div>
+    <div class="rc-label">Select your role:</div>
+    <div class="roles-grid">
+      <div class="role-card" data-role="PM" onclick="selectRole('PM',this)">
+        <div class="rc-icon">📊</div>
+        <div class="rc-role">Programme Manager</div>
+        <div class="rc-desc">Full KPI dashboard, revenue, all classes, SOC, assessments</div>
+        <div class="rc-tag full">FULL ACCESS</div>
+      </div>
+      <div class="role-card" data-role="LF" onclick="selectRole('LF',this)">
+        <div class="rc-icon">👩‍🏫</div>
+        <div class="rc-role">Learning Facilitator</div>
+        <div class="rc-desc">My classes, attendance, assessments, learner feedback</div>
+        <div class="rc-tag cls">CLASS ACCESS</div>
+      </div>
+      <div class="role-card" data-role="LA" onclick="selectRole('LA',this)">
+        <div class="rc-icon">🎓</div>
+        <div class="rc-role">Learning Associate</div>
+        <div class="rc-desc">SOC schedules, attendance follow-up, learner support</div>
+        <div class="rc-tag sup">SUPPORT ACCESS</div>
+      </div>
+      <div class="role-card" data-role="LS" onclick="selectRole('LS',this)">
+        <div class="rc-icon">🛠️</div>
+        <div class="rc-role">Learning Support</div>
+        <div class="rc-desc">Operational schedules, SOC status, daily tasks</div>
+        <div class="rc-tag lim">LIMITED ACCESS</div>
+      </div>
+    </div>
+    <button class="roles-go" id="roles-go" onclick="loadDashboard()">Continue to Dashboard →</button>
+    <div class="rc-signout"><a onclick="signOut()">← Sign out</a></div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="screen-dashboard" class="screen">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="t-brand">
+      <div class="t-badge">LITHAN</div>
+      <div>
+        <div class="t-title" id="dash-title">Command Centre</div>
+        <div class="t-sub">Digital Business Pillar · Your Mission. Our Data. Smarter Decisions.</div>
+      </div>
+    </div>
+    <div class="t-center">CLaaS²2SaaS</div>
+    <div class="t-right">
+      <div style="display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;color:#ffaa88">
+        <div style="width:5px;height:5px;background:#ffaa88;border-radius:50%;animation:urg 1.2s infinite"></div>DEMO
+      </div>
+      <div class="t-clock" id="clock">–</div>
+      <div class="t-lava"><div class="t-lava-dot"></div><span>Checkonit ACTIVE</span></div>
+      <div class="t-user" id="t-user" onclick="toggleDD(event)">
+        <div class="t-uavatar" id="t-avatar">?</div>
+        <div class="t-uname" id="t-uname">User</div>
+        <div class="t-urole" id="t-urole">PM</div>
+        <span class="t-chevron">▼</span>
+        <div class="u-dd" id="u-dd">
+          <div class="u-dd-head">
+            <div class="u-dd-name" id="dd-name">–</div>
+            <div class="u-dd-email" id="dd-email">–</div>
+          </div>
+          <div class="u-dd-item" onclick="openAssistSettings()">🤖 Assistant Settings</div>
+          <div class="u-dd-item" onclick="openUrlManager()">📊 Manage PBI Links</div>
+          <div class="u-dd-item" onclick="showScreen('roles')">🔄 Switch Role</div>
+          <div class="u-dd-sep"></div>
+          <div class="u-dd-item danger" onclick="signOut()">⬡ Sign Out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar"></div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="main-view">
+
+        <!-- DASHBOARD CARDS VIEW -->
+        <div class="view-panel active" id="view-dash">
+          <div class="dash-view" id="dash-content"></div>
+          <div class="qa-bar" id="qa-bar"></div>
+        </div>
+
+        <!-- POWER BI EMBED VIEW -->
+        <div class="view-panel" id="view-pbi">
+          <div class="pbi-view-head">
+            <div class="pbi-view-left">
+              <div class="pbi-view-icon">📊</div>
+              <div>
+                <div class="pbi-view-title" id="pbi-title">Dashboard</div>
+                <div class="pbi-view-sub" id="pbi-sub">Power BI Report</div>
+              </div>
+            </div>
+            <div class="pbi-view-right">
+              <button class="pbi-view-btn" onclick="openUrlManager()">⚙ Set URL</button>
+              <button class="pbi-view-btn" onclick="reloadPBI()">⟳ Reload</button>
+              <button class="pbi-back" onclick="showDashView()">← Back to Dashboard</button>
+            </div>
+          </div>
+          <div class="pbi-iframe-wrap">
+            <iframe class="pbi-iframe" id="pbi-iframe" src="about:blank" allowfullscreen></iframe>
+            <div class="pbi-placeholder" id="pbi-placeholder">
+              <div class="pbi-ph-icon">📊</div>
+              <div class="pbi-ph-title" id="pbi-ph-title">Power BI Report</div>
+              <div class="pbi-ph-desc">Paste your Power BI sharing link below to embed this report. Your Microsoft 365 sign-in will be required when the report loads.</div>
+              <div class="pbi-ph-badge">⚡ SSO Required — staff only access</div>
+              <div class="pbi-ph-url-box">
+                <div class="pbi-ph-url-label">Power BI Report URL</div>
+                <div class="pbi-ph-url-row">
+                  <input class="pbi-ph-url-input" id="pbi-quick-url" placeholder="https://app.powerbi.com/groups/.../reports/...">
+                  <button class="pbi-ph-save" onclick="savePBIQuickUrl()">Load →</button>
+                </div>
+                <div class="pbi-ph-note">
+                  In Power BI: open your report → Share → Copy link<br>
+                  Or use the browser URL directly from app.powerbi.com
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ASSISTANT SLOT -->
+    <div class="lava-panel" id="assist-panel">
+      <div class="lp-head">
+        <div class="lp-orb"><div class="lp-orb-inner">AI</div></div>
+        <div>
+          <div class="lp-name" id="lp-name-txt">Checkonit</div>
+          <div class="lp-stat" id="lava-stat">Lithan Academy Programme Assistant</div>
+        </div>
+        <button class="lp-gear" onclick="openAssistSettings()" title="Assistant settings">⚙</button>
+      </div>
+      <div class="lava-builtin" id="lava-builtin">
+        <div class="lp-msgs" id="lp-msgs"></div>
+        <div class="lp-input-area">
+          <div class="lp-chips" id="lp-chips"></div>
+          <div class="lp-row">
+            <textarea class="lp-input" id="lp-input" rows="2" placeholder="Ask Checkonit anything…" onkeydown="handleKey(event)"></textarea>
+            <button class="lp-send" onclick="sendMsg()">➤</button>
+          </div>
+        </div>
+      </div>
+      <div class="lava-embed" id="lava-embed">
+        <div class="embed-bar">
+          <button class="hb-btn" onclick="openAssistTab()">↗ Open in new tab</button>
+          <button class="hb-btn" onclick="useBuiltinAssistant()">← Use Checkonit</button>
+        </div>
+        <iframe class="embed-frame" id="assist-frame" src="about:blank" allow="clipboard-write; microphone"></iframe>
+        <div class="embed-note">If this stays blank or says it refused to connect, your assistant does not allow embedding yet — use “Open in new tab”, or ask IT to allow this app’s address.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PICKER MODAL (add widget / KPI) -->
+<div class="modal-overlay" id="pick-modal">
+  <div class="modal-box" style="width:440px">
+    <div class="modal-head">
+      <div><div class="modal-head-title" id="pick-title">Add</div><div class="modal-head-sub">Click an item to add it to your layout</div></div>
+      <button class="modal-x" onclick="closePicker()">×</button>
+    </div>
+    <div class="modal-list" id="pick-list"></div>
+    <div class="modal-foot"><button class="modal-done" onclick="closePicker()">✓ Done</button></div>
+  </div>
+</div>
+
+<!-- ASSISTANT SETTINGS MODAL -->
+<div class="modal-overlay" id="assist-modal">
+  <div class="modal-box" style="width:420px">
+    <div class="modal-head">
+      <div><div class="modal-head-title">⚙ Assistant Settings</div><div class="modal-head-sub">Use your own AI assistant in the right-hand column</div></div>
+      <button class="modal-x" onclick="closeAssistSettings()">×</button>
+    </div>
+    <div class="as-body">
+      <label for="as-mode">Assistant</label>
+      <select id="as-mode"><option value="builtin">Built-in Checkonit (demo)</option><option value="embed">My in-house assistant (embed link)</option></select>
+      <label for="as-url">Assistant link (https://…)</label>
+      <input id="as-url" placeholder="https://your-assistant.lithan.com">
+      <div class="as-note">Embedding only works if your assistant allows being shown inside another page and uses the same Microsoft sign-in. If it will not load, use “Open in new tab” or ask IT to allow this app.</div>
+      <div class="as-err" id="as-err"></div>
+    </div>
+    <div class="modal-foot"><button class="modal-done" onclick="saveAssistSettings()">Save</button></div>
+  </div>
+</div>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-head-title">＋ Add Items to Group</div>
+        <div class="modal-head-sub" id="add-modal-grp-name">Select items to add</div>
+      </div>
+      <button class="modal-x" onclick="closeAddModal()">×</button>
+    </div>
+    <div class="modal-search"><input type="text" id="add-search" placeholder="Search…" oninput="renderAddList()"></div>
+    <div class="modal-list" id="add-list"></div>
+    <div class="modal-foot"><button class="modal-done" onclick="closeAddModal()">✓ Done</button></div>
+  </div>
+</div>
+
+<!-- PBI URL MANAGER MODAL -->
+<div class="url-modal" id="url-modal">
+  <div class="url-box">
+    <div class="url-head">
+      <div>
+        <div class="url-head-title">📊 Manage Power BI Report Links</div>
+      </div>
+      <button class="url-x" onclick="closeUrlManager()">×</button>
+    </div>
+    <div class="url-body">
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6">
+        Paste your Power BI report sharing URLs below. Go to your Power BI report → click <strong>Share</strong> → copy the link. URLs are saved in your browser.
+      </p>
+      <div class="url-list" id="url-list"></div>
+    </div>
+    <div class="url-foot">
+      <button class="url-save" onclick="saveAllUrls()">💾 Save All URLs</button>
+      <button class="url-cancel" onclick="closeUrlManager()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+var msalInstance = null;
+var currentUser  = null;
+var currentRole  = null;
+var isDemoMode   = false;
+var currentPBIItem = null; // the sidebar item currently open in PBI view
+var addModalGID  = null;   // current group id for add modal
+
+// ════════════════════════════════════════════════════
+//  CATALOGUE — all available sidebar items
+// ════════════════════════════════════════════════════
+var CATALOGUE = [
+  // --- Core ---
+  {id:'dashboard',   cat:'core', icon:'⊟',  label:'Dashboard',            desc:'Main KPI overview',                          pbi:false},
+  {id:'tasks',       cat:'core', icon:'✓',  label:'My Tasks',             desc:'Daily, weekly, monthly reminders',           pbi:false, badge:'8'},
+  {id:'calendar',    cat:'core', icon:'◷',  label:'Calendar',             desc:'Class and SOC schedule view',                pbi:false},
+  {id:'reminders',   cat:'core', icon:'◉',  label:'Reminders',            desc:'Upcoming deadlines and alerts',              pbi:false, badge:'3', badgeClass:'amber'},
+  // --- Operations ---
+  {id:'classes',     cat:'ops',  icon:'⊞',  label:'Classes',              desc:'All running classes this month',             pbi:false},
+  {id:'soc',         cat:'ops',  icon:'◈',  label:'SOC Cohorts',          desc:'Start-of-class cohort tracker',              pbi:false},
+  {id:'assessments', cat:'ops',  icon:'◑',  label:'Assessments',          desc:'Assessment pipeline and submissions',         pbi:false},
+  {id:'surveys',     cat:'ops',  icon:'◍',  label:'Surveys',              desc:'Learner survey data and scores',             pbi:false},
+  {id:'revenue',     cat:'ops',  icon:'💰', label:'Revenue',              desc:'Revenue tracking and collection',            pbi:false},
+  {id:'withdrawals', cat:'ops',  icon:'↓',  label:'Withdrawals',          desc:'Withdrawal analysis and risk flags',         pbi:false},
+  // --- Performance ---
+  {id:'scorecards',  cat:'perf', icon:'▦',  label:'Scorecards',           desc:'KPI scorecards',                             pbi:false},
+  {id:'kpis',        cat:'perf', icon:'⤴',  label:'KPIs',                 desc:'Key performance indicators',                 pbi:false},
+  {id:'reports',     cat:'perf', icon:'≡',  label:'Reports',              desc:'All reports',                                pbi:false},
+  // --- Power BI ---
+  {id:'pbi-revenue',    cat:'pbi', icon:'📊', label:'Revenue Report (EOC)',       desc:'Revenue by pillar, cohort, EOC status',       pbi:true},
+  {id:'pbi-attendance', cat:'pbi', icon:'📊', label:'Attendance Dashboard',       desc:'Daily & weekly attendance by class & cohort', pbi:true},
+  {id:'pbi-scorecard',  cat:'pbi', icon:'📊', label:'Pillar Scorecard',           desc:'All KPIs in one executive summary view',      pbi:true},
+  {id:'pbi-soc',        cat:'pbi', icon:'📊', label:'SOC Planning',               desc:'Start-of-class cohort planning tracker',       pbi:true},
+  {id:'pbi-assessment', cat:'pbi', icon:'📊', label:'Assessment Pipeline',        desc:'Submission rates, overdue, grade distribution',pbi:true},
+  {id:'pbi-withdrawal', cat:'pbi', icon:'📊', label:'Withdrawal Analysis',        desc:'Withdrawal trends, reasons, at-risk flags',   pbi:true},
+  {id:'pbi-survey',     cat:'pbi', icon:'📊', label:'Survey Results',             desc:'Learner satisfaction, NPS, facilitator scores',pbi:true},
+  {id:'pbi-finance',    cat:'pbi', icon:'📊', label:'Finance Summary',            desc:'IPO, outstanding fees, subsidy claims',        pbi:true},
+  {id:'pbi-dropout',    cat:'pbi', icon:'📊', label:'Dropout Risk Report',        desc:'ML-flagged learners at high dropout risk',     pbi:true},
+  {id:'pbi-engagement', cat:'pbi', icon:'📊', label:'Learner Engagement',         desc:'Portal logins, resource access, participation',pbi:true},
+  {id:'pbi-lm',         cat:'pbi', icon:'📊', label:'LM-Facilitation Report',     desc:'Facilitator metrics and ticket overview',      pbi:true},
+  {id:'pbi-student',    cat:'pbi', icon:'📊', label:'Student Overview',           desc:'Login monitor, attendance, EIS tickets',       pbi:true},
+];
+
+// PBI URLs stored per item id
+var PBI_URLS_KEY = 'pmcc_pbi_urls';
+function getPBIUrls(){ return JSON.parse(localStorage.getItem(PBI_URLS_KEY)||'{}'); }
+function setPBIUrls(obj){ localStorage.setItem(PBI_URLS_KEY, JSON.stringify(obj)); }
+
+// ════════════════════════════════════════════════════
+//  DEFAULT SIDEBAR CONFIG
+// ════════════════════════════════════════════════════
+function SB_KEY(){ return 'pmcc_sb_' + currentRole; }
+
+function defaultSidebar(){
+  return {groups:[
+    {id:'grp-core', name:'My Dashboard', locked:true, items:
+      ['dashboard','tasks','calendar','reminders'].map(function(id){return CATALOGUE.find(function(c){return c.id===id;});})}
+    ,
+    {id:'grp-pbi',  name:'Power BI Dashboards', locked:false, items:
+      ['pbi-revenue','pbi-attendance','pbi-scorecard','pbi-soc','pbi-assessment','pbi-withdrawal','pbi-survey'].map(function(id){return CATALOGUE.find(function(c){return c.id===id;});})}
+    ,
+  ]};
+}
+
+var sidebarCfg = null;
+function loadSidebarCfg(){
+  var s = localStorage.getItem(SB_KEY());
+  sidebarCfg = s ? JSON.parse(s) : defaultSidebar();
+}
+function saveSidebarCfg(){ localStorage.setItem(SB_KEY(), JSON.stringify(sidebarCfg)); }
+
+// ════════════════════════════════════════════════════
+//  SCREEN MANAGER
+// ════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+window.onload = function(){
+  // Version bump — clear old sidebar configs so new default applies
+  var SB_VER = 'pmcc_sb_ver_6';
+  if(!localStorage.getItem(SB_VER)){
+    Object.keys(localStorage).forEach(function(k){if(k.startsWith('pmcc_sb_')) localStorage.removeItem(k);});
+    localStorage.setItem(SB_VER,'1');
+  }
+  showScreen('login');
+  tick();
+  setInterval(tick,1000);
+  // close dropdown on outside click
+  document.addEventListener('click', function(e){
+    var chip=document.getElementById('t-user');
+    var dd=document.getElementById('u-dd');
+    if(chip&&dd&&!chip.contains(e.target)){
+      dd.classList.remove('open');chip.classList.remove('open');
+    }
+  });
+};
+
+// ════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════
+function msalLogin(){
+  showErr('Microsoft SSO requires Azure App Registration. Use Demo Mode to explore now.');
+}
+function demoLogin(role){
+  isDemoMode=true;
+  currentUser={name:'Demo User',email:'demo@lithan.com',initials:'DU'};
+  currentRole=role;
+  document.getElementById('rc-avatar').textContent='DU';
+  document.getElementById('rc-name').textContent='Welcome, Demo User!';
+  document.getElementById('rc-email').textContent='demo@lithan.com · Demo Mode';
+  // pre-select role card
+  document.querySelectorAll('.role-card').forEach(function(c){c.classList.remove('sel');});
+  var card=document.querySelector('.role-card[data-role="'+role+'"]');
+  if(card) card.classList.add('sel');
+  document.getElementById('roles-go').classList.add('on');
+  showScreen('roles');
+  setTimeout(loadDashboard,300);
+}
+function selectRole(role,el){
+  currentRole=role;
+  document.querySelectorAll('.role-card').forEach(function(c){c.classList.remove('sel');});
+  el.classList.add('sel');
+  document.getElementById('roles-go').classList.add('on');
+}
+function signOut(){
+  currentUser=null;currentRole=null;isDemoMode=false;sidebarCfg=null;
+  showScreen('login');
+}
+function showErr(msg){var e=document.getElementById('login-err');e.textContent=msg;e.style.display='block';}
+
+// ════════════════════════════════════════════════════
+//  LOAD DASHBOARD
+// ════════════════════════════════════════════════════
+var ROLE_LABELS={PM:'Programme Manager',LF:'Learning Facilitator',LA:'Learning Associate',LS:'Learning Support'};
+var ROLE_BANNERS={
+  PM:'📊 Programme Manager — Full access: KPIs, Revenue, Classes, SOC, Assessments',
+  LF:'👩‍🏫 Learning Facilitator — My Classes, Attendance, Assessments, Learner Feedback',
+  LA:'🎓 Learning Associate — SOC Schedules, Attendance Follow-up, Learner Support',
+  LS:'🛠️ Learning Support — Operational Schedules & Daily Tasks',
+};
+var ROLE_CHIPS={
+  PM:["Today's urgent tasks","Classes at risk","Revenue pacing","What needs attention?"],
+  LF:["My classes today","Attendance alerts","Upcoming assessments","Learner feedback"],
+  LA:["Today's SOC schedule","Attendance follow-up","Support tasks","My reminders"],
+  LS:["Today's schedule","SOC status","My tasks","Any alerts?"],
+};
+
+function loadDashboard(){
+  if(!currentRole) return;
+  // Topbar
+  document.getElementById('dash-title').textContent = ROLE_LABELS[currentRole]+' Command Centre';
+  document.getElementById('t-avatar').textContent   = currentUser.initials;
+  document.getElementById('t-uname').textContent    = currentUser.name.split(' ')[0];
+  var rt=document.getElementById('t-urole');
+  rt.textContent=currentRole; rt.className='t-urole '+currentRole;
+  document.getElementById('dd-name').textContent  = currentUser.name;
+  document.getElementById('dd-email').textContent = currentUser.email+(isDemoMode?' · Demo':'');
+  document.getElementById('lava-stat').textContent= ROLE_LABELS[currentRole]+' Mode · Online';
+  // Content
+  editMode=false;draft=null;resetArmed=false;layout=loadLayout();renderHome();
+  renderQABar();
+  applyAssistant();
+  initLAVA();
+  // Sidebar last
+  loadSidebarCfg();
+  drawSidebar();
+  showScreen('dashboard');
+  showDashView();
+}
+
+// ════════════════════════════════════════════════════
+//  SIDEBAR DRAW — uses string concatenation, no template literals
+// ════════════════════════════════════════════════════
+function drawSidebar(){
+  var sb=document.getElementById('sidebar');
+  if(!sb||!sidebarCfg) return;
+  var h='';
+  sidebarCfg.groups.forEach(function(grp,gi){
+    if(gi>0) h+='<div class="sb-divider"></div>';
+    h+='<div class="sb-sec" data-gid="'+grp.id+'">';
+    if(grp.locked){
+      h+='<div class="sb-sec-lbl">'+grp.name+'</div>';
+    } else {
+      h+='<div class="sb-grp-head">'
+        +'<div class="sb-grp-name">'+grp.name+'</div>'
+        +'<div class="sb-grp-btns">'
+        +'<button class="sb-grp-btn" data-act="rename" data-gid="'+grp.id+'" title="Rename">✎</button>'
+        +'<button class="sb-grp-btn" data-act="delete" data-gid="'+grp.id+'" title="Delete">×</button>'
+        +'</div></div>';
+    }
+    (grp.items||[]).forEach(function(item,ii){
+      if(!item) return;
+      var badge = item.badge ? '<span class="sb-badge'+(item.badgeClass?' '+item.badgeClass:'')+'">'+item.badge+'</span>' : '';
+      var pbi   = item.pbi   ? '<span class="sb-pbi">PBI</span>' : '';
+      var act   = (gi===0&&ii===0) ? ' active' : '';
+      var rmBtn = grp.locked ? '' : '<button class="sb-item-rm" data-act="removeitem" data-gid="'+grp.id+'" data-item-id="'+item.id+'" title="Remove">×</button>';
+      h+='<div class="sb-item'+act+'" data-item-id="'+item.id+'" data-is-pbi="'+(item.pbi?'1':'0')+'" data-item-label="'+item.label.replace(/"/g,'&quot;')+'">'
+        +'<span class="sb-icon">'+item.icon+'</span>'
+        +'<span class="sb-label">'+item.label+'</span>'
+        +pbi+badge+rmBtn
+        +'</div>';
+    });
+    h+='<div class="sb-add-item" data-act="additem" data-gid="'+grp.id+'">+ Add item</div>';
+    h+='</div>';
+  });
+  h+='<div class="sb-divider"></div>'
+    +'<div class="sb-sec"><div class="sb-add-group" data-act="addgroup">＋ Add Group</div></div>'
+    +'<div class="sb-footer"><div class="lava-btn" data-act="lava"><div class="lava-btn-icon">◎</div><div class="lava-btn-text">Ask Checkonit</div></div></div>';
+  sb.innerHTML=h;
+
+  // Single delegated listener
+  sb.onclick=function(e){
+    var el=e.target.closest('[data-act],[data-item-id]');
+    if(!el) return;
+    var act=el.getAttribute('data-act');
+    var gid=el.getAttribute('data-gid');
+    if(act==='removeitem'){ removeItemFromSidebar(gid, el.getAttribute('data-item-id')); return; }
+    if(act==='rename')  { renameGroup(gid); return; }
+    if(act==='delete')  { deleteGroup(gid); return; }
+    if(act==='additem') { openAddModal(gid); return; }
+    if(act==='addgroup'){ addGroup(); return; }
+    if(act==='lava')    { focusLAVA(); return; }
+    if(el.hasAttribute('data-item-id')){
+      // sidebar item click
+      document.querySelectorAll('#sidebar .sb-item').forEach(function(i){i.classList.remove('active');});
+      el.classList.add('active');
+      if(el.getAttribute('data-is-pbi')==='1'){
+        openPBIView(el.getAttribute('data-item-id'), el.getAttribute('data-item-label'));
+      } else {
+        showDashView();
+      }
+      return;
+    }
+  };
+}
+
+// group actions
+function addGroup(){
+  var name=prompt('Group name:');
+  if(!name||!name.trim()) return;
+  sidebarCfg.groups.push({id:'grp-'+Date.now(),name:name.trim(),locked:false,items:[]});
+  saveSidebarCfg(); drawSidebar();
+}
+function renameGroup(gid){
+  var grp=sidebarCfg.groups.find(function(g){return g.id===gid;});
+  if(!grp) return;
+  var name=prompt('Rename group:',grp.name);
+  if(!name||!name.trim()) return;
+  grp.name=name.trim(); saveSidebarCfg(); drawSidebar();
+}
+function deleteGroup(gid){
+  var grp=sidebarCfg.groups.find(function(g){return g.id===gid;});
+  if(!grp||!confirm('Delete group "'+grp.name+'"?')) return;
+  sidebarCfg.groups=sidebarCfg.groups.filter(function(g){return g.id!==gid;});
+  saveSidebarCfg(); drawSidebar();
+}
+function removeItemFromSidebar(gid, itemId){
+  var grp=sidebarCfg.groups.find(function(g){return g.id===gid;});
+  if(!grp) return;
+  grp.items=grp.items.filter(function(i){return i&&i.id!==itemId;});
+  saveSidebarCfg(); drawSidebar();
+}
+
+// ════════════════════════════════════════════════════
+//  ADD ITEM MODAL
+// ════════════════════════════════════════════════════
+function openAddModal(gid){
+  addModalGID=gid;
+  var grp=sidebarCfg.groups.find(function(g){return g.id===gid;});
+  document.getElementById('add-modal-grp-name').textContent='Adding to: '+(grp?grp.name:'group');
+  document.getElementById('add-search').value='';
+  renderAddList();
+  document.getElementById('add-modal').classList.add('open');
+}
+function closeAddModal(){
+  document.getElementById('add-modal').classList.remove('open');
+  addModalGID=null;
+}
+function renderAddList(){
+  var q=document.getElementById('add-search').value.toLowerCase();
+  var grp=sidebarCfg.groups.find(function(g){return g.id===addModalGID;});
+  var existIds=(grp?grp.items:[]).filter(Boolean).map(function(i){return i.id;});
+  var cats=['core','ops','perf','pbi'];
+  var catLabels={core:'Core',ops:'Operations',perf:'Performance',pbi:'Power BI Reports'};
+  var h='';
+  cats.forEach(function(cat){
+    var items=CATALOGUE.filter(function(c){
+      return c.cat===cat && (!q||c.label.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q));
+    });
+    if(!items.length) return;
+    h+='<div class="modal-cat-lbl">'+catLabels[cat]+'</div>';
+    items.forEach(function(item){
+      var inGrp=existIds.includes(item.id);
+      var pbiTag=item.pbi?' <span class="mi-pbi">PBI</span>':'';
+      var cls='modal-item'+(inGrp?' in':'');
+      var btnCls=inGrp?'mi-btn mi-btn-rm':'mi-btn mi-btn-add';
+      h+='<div class="'+cls+'" data-mid="'+item.id+'" data-in-grp="'+(inGrp?'1':'0')+'">'
+        +'<div class="mi-icon">'+item.icon+'</div>'
+        +'<div class="mi-body"><div class="mi-name">'+item.label+pbiTag+'</div><div class="mi-desc">'+item.desc+'</div></div>'
+        +'<div class="'+btnCls+'">'+(inGrp?'−':'+')+'</div>'
+        +'</div>';
+    });
+  });
+  var list=document.getElementById('add-list');
+  list.innerHTML=h;
+  list.onclick=function(e){
+    var el=e.target.closest('[data-mid]');
+    if(!el) return;
+    var mid=el.getAttribute('data-mid');
+    var inGrp=el.getAttribute('data-in-grp')==='1';
+    var grp=sidebarCfg.groups.find(function(g){return g.id===addModalGID;});
+    if(!grp) return;
+    if(inGrp){
+      grp.items=grp.items.filter(function(i){return i&&i.id!==mid;});
+    } else {
+      var item=CATALOGUE.find(function(c){return c.id===mid;});
+      if(item&&!grp.items.find(function(i){return i&&i.id===mid;})) grp.items.push(item);
+    }
+    saveSidebarCfg(); drawSidebar(); renderAddList();
+  };
+}
+
+// ════════════════════════════════════════════════════
+//  VIEW SWITCHER — dash cards vs PBI iframe
+// ════════════════════════════════════════════════════
+function showDashView(){
+  document.getElementById('view-dash').classList.add('active');
+  document.getElementById('view-pbi').classList.remove('active');
+}
+function openPBIView(itemId, label){
+  currentPBIItem=itemId;
+  document.getElementById('pbi-title').textContent=label;
+  document.getElementById('pbi-sub').textContent='Power BI Report · Lithan Academy';
+  document.getElementById('pbi-ph-title').textContent=label;
+  document.getElementById('pbi-quick-url').value='';
+
+  // Check if we have a saved URL for this item
+  var urls=getPBIUrls();
+  var url=urls[itemId]||'';
+  if(url){
+    loadPBIUrl(url);
+  } else {
+    // Show placeholder with input
+    document.getElementById('pbi-iframe').src='about:blank';
+    document.getElementById('pbi-placeholder').style.display='flex';
+  }
+  document.getElementById('view-dash').classList.remove('active');
+  document.getElementById('view-pbi').classList.add('active');
+}
+function loadPBIUrl(url){
+  var embedUrl=convertToEmbedUrl(url);
+  document.getElementById('pbi-iframe').src=embedUrl;
+  document.getElementById('pbi-placeholder').style.display='none';
+}
+function convertToEmbedUrl(url){
+  // If it's already an embed URL, return as-is
+  if(url.includes('reportEmbed')||url.includes('embed?')) return url;
+  // Convert browser URL: https://app.powerbi.com/groups/GROUP/reports/REPORT/Page
+  // to embed URL: https://app.powerbi.com/reportEmbed?reportId=REPORT&groupId=GROUP
+  var groupMatch=url.match(/groups\/([^\/]+)/);
+  var reportMatch=url.match(/reports\/([^\/\?]+)/);
+  if(groupMatch&&reportMatch){
+    return 'https://app.powerbi.com/reportEmbed?reportId='+reportMatch[1]+'&groupId='+groupMatch[1]+'&autoAuth=true&ctid='+getAADTenantHint();
+  }
+  // Also handle m365.cloud.microsoft URLs — just use as-is in iframe
+  return url;
+}
+function getAADTenantHint(){
+  // Returns tenant hint for autoAuth — will prompt M365 login if not already signed in
+  return localStorage.getItem('pmcc_tenant_id')||'';
+}
+function savePBIQuickUrl(){
+  var url=document.getElementById('pbi-quick-url').value.trim();
+  if(!url){alert('Please paste a Power BI URL first.');return;}
+  if(currentPBIItem){
+    var urls=getPBIUrls(); urls[currentPBIItem]=url; setPBIUrls(urls);
+  }
+  loadPBIUrl(url);
+}
+function reloadPBI(){
+  var f=document.getElementById('pbi-iframe');
+  if(f.src&&f.src!=='about:blank') f.src=f.src;
+}
+
+// ════════════════════════════════════════════════════
+//  PBI URL MANAGER (bulk manage all PBI links)
+// ════════════════════════════════════════════════════
+function openUrlManager(){
+  // close dropdown
+  document.getElementById('u-dd').classList.remove('open');
+  document.getElementById('t-user').classList.remove('open');
+  var urls=getPBIUrls();
+  var pbiItems=CATALOGUE.filter(function(c){return c.pbi;});
+  var h='';
+  pbiItems.forEach(function(item){
+    var saved=urls[item.id]||'';
+    h+='<div class="url-item">'
+      +'<div class="url-item-name">'+item.icon+' '+item.label+(saved?'<span style="font-size:9px;color:var(--green);font-weight:700;margin-left:6px">✓ URL saved</span>':'')+'</div>'
+      +'<input class="url-item-input" data-url-id="'+item.id+'" value="'+saved.replace(/"/g,'&quot;')+'" placeholder="https://app.powerbi.com/groups/.../reports/...">'
+      +'<div class="url-item-hint">Share link from Power BI → Share → Copy link, or paste browser URL directly</div>'
+      +'</div>';
+  });
+  document.getElementById('url-list').innerHTML=h;
+  document.getElementById('url-modal').classList.add('open');
+}
+function saveAllUrls(){
+  var urls=getPBIUrls();
+  document.querySelectorAll('[data-url-id]').forEach(function(inp){
+    var val=inp.value.trim();
+    if(val) urls[inp.getAttribute('data-url-id')]=val;
+    else delete urls[inp.getAttribute('data-url-id')];
+  });
+  setPBIUrls(urls);
+  alert('URLs saved! Click any PBI item in the sidebar to open it.');
+  closeUrlManager();
+}
+function closeUrlManager(){document.getElementById('url-modal').classList.remove('open');}
+
+// ════════════════════════════════════════════════════
+//  HOME — customisable KPI strip + widget grid (V7)
+//  Role gives a starting template; the user then edits freely.
+//  Layout is saved per role in localStorage (pmcc_layout_<role>).
+// ════════════════════════════════════════════════════
+function hesc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function lsGet(k){try{return localStorage.getItem(k)||'';}catch(e){return '';}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+var layout=null, draft=null, editMode=false, resetArmed=false, pickKind='', uidCounter=0;
+
+// ---------- KPI catalogue ----------
+var KPI_CAT=[
+  {id:'att',       label:'Attendance Rate',          desc:'Pillar attendance vs target'},
+  {id:'asm',       label:'Assessment Completion',    desc:'Completion rate vs target'},
+  {id:'rev',       label:'Revenue (Month)',          desc:'Actual vs monthly target'},
+  {id:'wd',        label:'Withdrawal Rate',          desc:'Withdrawal rate vs target'},
+  {id:'srv',       label:'Survey Quality',           desc:'Survey score out of 90'},
+  {id:'resp',      label:'Survey Response Rate',     desc:'Learners responding to surveys'},
+  {id:'cls_today', label:'Classes Today',            desc:'Sessions scheduled today'},
+  {id:'soc_week',  label:'SOC This Week',            desc:'Start-of-class cohorts this week'},
+  {id:'followups', label:'Follow-ups Needed',        desc:'Learners to contact on attendance'},
+  {id:'overdue',   label:'Overdue Assessments',      desc:'Submissions past due'},
+  {id:'wd_risk',   label:'Withdrawal-Risk Learners', desc:'Learners flagged at risk'},
+  {id:'tasks_open',label:'Open Tasks',               desc:'Auto-generated tasks outstanding'}
+];
+function kpiHtml(id){
+  var d=LIVE_DATA, n, t;
+  if(id==='att')  return kpi('Attendance Rate',d.attendance.pillar_rate+'%','green','▲ 0.47% MoM','up','Target: '+d.attendance.target+'% ✓ On Track',d.attendance.pillar_rate);
+  if(id==='asm')  return kpi('Assessment Completion',d.assessments.completion_rate+'%','blue','→ 0.29% MoM','warn','Target: '+d.assessments.target+'% ⚠ Below',d.assessments.completion_rate);
+  if(id==='rev')  return kpi('Revenue (Month)','$'+d.finance.revenue_actual+'k','gold','▲ '+d.finance.revenue_pct+'% of $'+(d.finance.revenue_target/1000).toFixed(2)+'M','up','Mid-month pacing',Math.round(d.finance.revenue_pct));
+  if(id==='wd')   return kpi('Withdrawal Rate',d.withdrawals.rate+'%','red','▼ +'+d.withdrawals.mom_change+'% MoM','down','Target: <'+d.withdrawals.target+'% 🔴 Watch',d.withdrawals.rate);
+  if(id==='srv')  return kpi('Survey Quality',d.surveys.score.toFixed(1),'purple','→ Stable','warn','/ 90 pts · Target: '+d.surveys.target,88);
+  if(id==='resp') return kpi('Survey Response Rate',d.surveys.response_rate+'%','purple','▲ Improving','up','Low: '+d.surveys.low_response_cohorts.length+' cohorts',d.surveys.response_rate);
+  if(id==='cls_today'){n=d.today_classes.length;return kpi('Classes Today',String(n),'blue','→ '+d.today_classes.filter(function(c){return c.status==='done';}).length+' done','warn','Scheduled sessions',Math.min(100,n*15));}
+  if(id==='soc_week') return kpi('SOC This Week',String(d.soc.total),'blue','△ '+d.soc.delayed+' delayed','warn','Cohorts starting',Math.round((d.soc.total-d.soc.delayed)/d.soc.total*100));
+  if(id==='followups'){n=d.followups.length;return kpi('Follow-ups Needed',String(n),'gold','→ Today','warn','Attendance outreach',Math.min(100,n*20));}
+  if(id==='overdue')  return kpi('Overdue Assessments',String(d.assessments.total_overdue),'red','▲ Needs action','down','Across '+d.assessments.overdue.length+' cohorts',Math.min(100,d.assessments.total_overdue*2));
+  if(id==='wd_risk'){n=0;d.withdrawals.at_risk_learners.forEach(function(w){n+=w.count;});return kpi('Withdrawal-Risk Learners',String(n),'red','△ Watch list','down','Across '+d.withdrawals.at_risk_learners.length+' cohorts',Math.min(100,n*8));}
+  if(id==='tasks_open'){t=generateAutoTasks(currentRole);n=t.urgent.length+t.today.length+t.week.length;return kpi('Open Tasks',String(n),'gold','🔴 '+t.urgent.length+' urgent','down','Auto-generated from data',Math.min(100,n*8));}
+  return '';
+}
+function kpi(lbl,val,col,trend,trendCls,target,pct){
+  return '<div class="kpi-card"><div class="kpi-bar '+col+'"></div>'
+    +'<div class="kpi-lbl">'+lbl+'</div>'
+    +'<div class="kpi-val '+col+'">'+val+'</div>'
+    +'<div class="kpi-trend '+trendCls+'">'+trend+'</div>'
+    +'<div class="kpi-target">'+target+'</div>'
+    +'<div class="prog"><div class="prog-f" style="width:'+pct+'%;background:var(--'+col+')"></div></div>'
+    +'</div>';
+}
+
+// ---------- Widget catalogue ----------
+var WIDGET_CAT=[
+  {id:'overview',  icon:'⊞', label:'Classes & SOC Overview',  desc:'Classes running, SOC cohorts, at-risk classes', w:1,h:2},
+  {id:'tasks',     icon:'✓', label:'Auto-Tasks',              desc:'Tasks generated from programme data',          w:1,h:2, single:true},
+  {id:'alerts',    icon:'⚠', label:'AI Insights & Alerts',    desc:'Live alerts and assessment counts',            w:1,h:2},
+  {id:'myclasses', icon:'◷', label:'My Classes This Week',    desc:'Weekly class list with attendance',            w:2,h:1},
+  {id:'today',     icon:'☀', label:"Today's Class Schedule",  desc:'Sessions today with room and status',          w:1,h:1},
+  {id:'soc',       icon:'◈', label:'SOC Schedule',            desc:'SOC cohorts this week and confirmation',       w:1,h:1},
+  {id:'followup',  icon:'☎', label:'Attendance Follow-up',    desc:'Learners to contact (masked IDs)',             w:1,h:1},
+  {id:'withdrawal',icon:'↓', label:'Withdrawal Risk',         desc:'Cohorts with at-risk learners',                w:1,h:1},
+  {id:'assess',    icon:'◑', label:'Assessments Due / Overdue',desc:'Overdue and upcoming assessments',            w:1,h:1},
+  {id:'finance',   icon:'💰',label:'Revenue & Finance',       desc:'Revenue pacing and outstanding fees',          w:1,h:1},
+  {id:'survey',    icon:'◍', label:'Survey Snapshot',         desc:'Score, response rate, low-response cohorts',   w:1,h:1},
+  {id:'pbi',       icon:'📊',label:'Power BI Tile',           desc:'Pin any Power BI report here (add several)',   w:2,h:2, multi:true},
+  {id:'notes',     icon:'📝',label:'My Notes',                desc:'Private notes, saved in this browser',         w:1,h:1, multi:true}
+];
+function wmeta(id){for(var i=0;i<WIDGET_CAT.length;i++){if(WIDGET_CAT[i].id===id)return WIDGET_CAT[i];}return null;}
+
+// ---------- Role default templates: [widgetId, width, height] ----------
+var ROLE_TEMPLATES={
+  PM:{kpis:['att','asm','rev','wd','srv'],
+      widgets:[['overview',1,2],['tasks',1,2],['alerts',1,2]]},
+  LF:{kpis:['att','overdue','srv','tasks_open'],
+      widgets:[['myclasses',2,1],['tasks',1,2],['assess',1,1],['followup',1,1],['notes',1,1]]},
+  LA:{kpis:['soc_week','followups','wd_risk','tasks_open'],
+      widgets:[['soc',2,1],['tasks',1,2],['followup',1,1],['withdrawal',1,1],['notes',1,1]]},
+  LS:{kpis:['cls_today','soc_week','tasks_open'],
+      widgets:[['today',2,1],['tasks',1,2],['soc',1,1],['notes',1,1]]}
+};
+function newUid(){uidCounter++;return 'w'+Date.now().toString(36)+uidCounter;}
+function makeDefault(role){
+  var t=ROLE_TEMPLATES[role]||ROLE_TEMPLATES.PM;
+  return {
+    kpis:t.kpis.slice(),
+    widgets:t.widgets.map(function(a){return {uid:newUid(),id:a[0],w:a[1],h:a[2],opt:''};})
+  };
+}
+function layoutKey(){return 'pmcc_layout_'+currentRole;}
+function loadLayout(){
+  try{
+    var s=lsGet(layoutKey());
+    if(s){
+      var o=JSON.parse(s);
+      if(o&&o.kpis&&o.widgets){
+        o.widgets=o.widgets.filter(function(w){return wmeta(w.id);});
+        return o;
+      }
+    }
+  }catch(e){}
+  return makeDefault(currentRole);
+}
+function saveLayout(){lsSet(layoutKey(),JSON.stringify(layout));}
+
+// ---------- Widget bodies ----------
+function pnl(title,right,inner){
+  return '<div class="panel"><div class="ph"><div class="ph-title">'+title+'</div>'+(right||'')+'</div>'+inner+'</div>';
+}
+function tagRow(name,meta,cls,txt){
+  return '<div class="ci"><div><div class="ci-name">'+name+'</div><div class="ci-meta">'+meta+'</div></div><div class="ci-tag '+cls+'">'+txt+'</div></div>';
+}
+function widgetBody(w){
+  var d=LIVE_DATA, h='';
+  switch(w.id){
+    case 'overview': return renderClassesPanel();
+    case 'tasks':    return renderTasksPanel();
+    case 'alerts':   return renderAlertsPanel();
+    case 'myclasses':
+      d.classes_week.forEach(function(c){h+=ci(c.code+' – '+c.name,c.day+' '+c.time+' · Room '+c.room+' · Att '+c.att+'%',c.att>=85?'on':(c.att>=75?'risk':'low'));});
+      return pnl('My Classes This Week','',' <div class="scroll-list">'+h+'</div>');
+    case 'today':
+      d.today_classes.forEach(function(c){
+        var cls=c.status==='done'?'on':(c.status==='ongoing'?'risk':'low');
+        var txt=c.status==='done'?'Done':(c.status==='ongoing'?'Ongoing':'Upcoming');
+        h+=tagRow(c.time+' · '+c.code,'Room '+c.room+' · '+c.facilitator,cls,txt);
+      });
+      return pnl("Today's Class Schedule",'','<div class="scroll-list">'+h+'</div>');
+    case 'soc':
+      d.soc.this_week.forEach(function(s){h+=tagRow(s.cohort,s.datetime+' · Room '+s.room,s.status==='confirmed'?'on':'risk',s.status==='confirmed'?'Confirmed':'Pending');});
+      return pnl('SOC Schedule','<div class="ph-link">'+d.soc.total+' this week · '+d.soc.delayed+' delayed</div>','<div class="scroll-list">'+h+'</div>');
+    case 'followup':
+      d.followups.forEach(function(f){h+=tagRow('Learner '+f.id,f.cohort+' · last present '+f.last,'low',f.absent+' absent');});
+      return pnl('Attendance Follow-up','<div class="ph-link">IDs masked</div>','<div class="scroll-list">'+h+'</div>');
+    case 'withdrawal':
+      d.withdrawals.at_risk_learners.forEach(function(r){h+=tagRow(r.cohort,r.reason,'low',r.count+' learners');});
+      return pnl('Withdrawal Risk','<div class="ph-link">Rate '+d.withdrawals.rate+'% · target '+d.withdrawals.target+'%</div>','<div class="scroll-list">'+h+'</div>');
+    case 'assess':
+      d.assessments.overdue.forEach(function(a){h+=tagRow(a.cohort,a.count+' overdue · due '+a.due,'low','Overdue');});
+      d.assessments.due_this_week.forEach(function(a){h+=tagRow(a.cohort,a.count+' due · '+a.due,'risk','Due soon');});
+      return pnl('Assessments Due / Overdue','','<div class="scroll-list">'+h+'</div>');
+    case 'finance':
+      d.finance.outstanding_cohorts.forEach(function(f){h+=tagRow(f.cohort,f.amount+' outstanding','low',f.days_overdue+'d overdue');});
+      return pnl('Revenue &amp; Finance','',
+        '<div class="mini-stats"><div class="ms"><div class="ms-lbl">Revenue</div><div class="ms-val gold">$'+d.finance.revenue_actual+'k</div><div class="ms-sub">of $'+d.finance.revenue_target+'k</div></div>'
+        +'<div class="ms"><div class="ms-lbl">Pacing</div><div class="ms-val blue">'+d.finance.revenue_pct+'%</div><div class="ms-sub">Mid-month</div></div></div>'
+        +'<div class="sec-lbl">Outstanding fees</div><div class="scroll-list">'+h+'</div>');
+    case 'survey':
+      d.surveys.low_response_cohorts.forEach(function(s){h+=tagRow(s.cohort,'Response rate '+s.rate+'%','risk','Low response');});
+      return pnl('Survey Snapshot','',
+        '<div class="mini-stats"><div class="ms"><div class="ms-lbl">Score</div><div class="ms-val gold">'+d.surveys.score.toFixed(1)+'</div><div class="ms-sub">Target '+d.surveys.target+'</div></div>'
+        +'<div class="ms"><div class="ms-lbl">Response</div><div class="ms-val blue">'+d.surveys.response_rate+'%</div><div class="ms-sub">Overall</div></div></div>'
+        +'<div class="sec-lbl">Low-response cohorts</div><div class="scroll-list">'+h+'</div>');
+    case 'notes':
+      return pnl('My Notes','<div class="ph-link">Private · this browser</div>',
+        '<textarea class="note-area" data-note="'+w.uid+'" placeholder="Jot down reminders, follow-ups, ideas…">'+hesc(lsGet('pmcc_note_'+w.uid))+'</textarea>');
+    case 'pbi': return pbiTile(w);
+  }
+  return pnl('Unknown widget','','');
+}
+function pbiTile(w){
+  var opts='<option value="">— choose a report —</option>';
+  CATALOGUE.forEach(function(c){if(c.pbi){opts+='<option value="'+c.id+'"'+(w.opt===c.id?' selected':'')+'>'+hesc(c.label)+'</option>';}});
+  var head='<div class="ph"><div class="ph-title">📊 Power BI</div><select class="pbi-sel" data-wsel="'+w.uid+'">'+opts+'</select></div>';
+  var body='';
+  if(!w.opt){
+    body='<div class="pbi-empty">Choose a Power BI report above to pin it here.</div>';
+  } else {
+    var url=getPBIUrls()[w.opt]||'';
+    var label='';
+    CATALOGUE.forEach(function(c){if(c.id===w.opt)label=c.label;});
+    if(url){
+      body='<iframe class="pbi-tile-frame" src="'+hesc(convertToEmbedUrl(url))+'" allowfullscreen></iframe>'
+        +'<div class="pbi-tile-foot"><button class="hb-btn" data-wact="pbiopen" data-item="'+w.opt+'">⤢ Open full view</button><span>Needs Microsoft 365 sign-in</span></div>';
+    } else {
+      body='<div class="pbi-empty"><div style="font-weight:700;color:var(--navy);margin-bottom:6px">'+hesc(label)+'</div>'
+        +'Paste its Power BI link once — it is remembered for the sidebar and this tile.'
+        +'<div class="pbi-tile-row"><input class="pbi-ph-url-input" data-pbiurl="'+w.uid+'" placeholder="https://app.powerbi.com/groups/.../reports/...">'
+        +'<button class="pbi-ph-save" data-wact="pbisave" data-uid="'+w.uid+'">Load →</button></div></div>';
+    }
+  }
+  return '<div class="panel">'+head+body+'</div>';
+}
+function renderClassesPanel(){
+  return '<div class="panel">'
+    +'<div class="ph"><div class="ph-title">Classes &amp; SOC Overview</div><div class="ph-link">View all →</div></div>'
+    +'<div class="mini-stats">'
+    +'<div class="ms"><div class="ms-lbl">Classes Running</div><div class="ms-val gold">128</div><div class="ms-sub">This month</div></div>'
+    +'<div class="ms"><div class="ms-lbl">SOC Cohorts</div><div class="ms-val blue">35</div><div class="ms-sub">This week · 5 delayed</div></div>'
+    +'</div>'
+    +'<div class="donut-wrap">'
+    +'<svg width="70" height="70" viewBox="0 0 70 70" style="flex-shrink:0">'
+    +'<circle cx="35" cy="35" r="27" fill="none" stroke="#e6ecf7" stroke-width="10"/>'
+    +'<circle cx="35" cy="35" r="27" fill="none" stroke="#0a7c4e" stroke-width="10" stroke-dasharray="103 67" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 35 35)"/>'
+    +'<circle cx="35" cy="35" r="27" fill="none" stroke="#b8960c" stroke-width="10" stroke-dasharray="49 170" stroke-dashoffset="-103" stroke-linecap="round" transform="rotate(-90 35 35)"/>'
+    +'<circle cx="35" cy="35" r="27" fill="none" stroke="#6d3bbf" stroke-width="10" stroke-dasharray="27 193" stroke-dashoffset="-152" stroke-linecap="round" transform="rotate(-90 35 35)"/>'
+    +'<text x="35" y="39" text-anchor="middle" fill="#1a2e5a" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace">128</text>'
+    +'</svg>'
+    +'<div class="dleg">'
+    +drow('#0a7c4e','On Track','68')+drow('#b8960c','At Risk','32')+drow('#6d3bbf','Needs Impr.','18')+drow('#c0c8d8','Not Started','10')
+    +'</div></div>'
+    +'<div class="sec-lbl">Past Week · At-Risk Classes</div>'
+    +'<div class="scroll-list">'
+    +ci('DM301 – Digital Marketing Advanced','Attendance: 78% · Tue 06 May','risk')
+    +ci('BD201 – Business Dev Fundamentals','Attendance: 72% · Wed 07 May','low')
+    +ci('EC401 – E-Commerce Strategy','Attendance: 91% · Thu 08 May','on')
+    +ci('AI201 – AI for Business','Attendance: 85% · Fri 09 May','on')
+    +'</div></div>';
+}
+function drow(col,lbl,val){return '<div class="dleg-row"><div class="dleg-l"><div class="dleg-dot" style="background:'+col+'"></div><span class="dleg-lbl">'+lbl+'</span></div><span class="dleg-val" style="color:'+col+'">'+val+'</span></div>';}
+function ci(name,meta,tag){return '<div class="ci"><div><div class="ci-name">'+name+'</div><div class="ci-meta">'+meta+'</div></div><div class="ci-tag '+tag+'">'+(tag==='on'?'On Track':tag==='risk'?'At Risk':'Low Att.')+'</div></div>';}
+
+// ---------- Render the home screen ----------
+function renderDashCards(){renderHome();}
+function wctl(w,i,n){
+  return '<div class="wctl">'
+    +'<button data-wact="wleft" data-uid="'+w.uid+'" title="Move earlier"'+(i===0?' disabled':'')+'>◀</button>'
+    +'<button data-wact="wright" data-uid="'+w.uid+'" title="Move later"'+(i===n-1?' disabled':'')+'>▶</button>'
+    +'<button data-wact="wwide" data-uid="'+w.uid+'" title="Change width">↔ '+w.w+'</button>'
+    +'<button data-wact="wtall" data-uid="'+w.uid+'" title="Change height">↕ '+w.h+'</button>'
+    +'<button class="del" data-wact="wdel" data-uid="'+w.uid+'" title="Remove">×</button>'
+    +'</div>';
+}
+function kctl(id,i,n){
+  return '<div class="wctl k">'
+    +'<button data-wact="kleft" data-kid="'+id+'"'+(i===0?' disabled':'')+'>◀</button>'
+    +'<button data-wact="kright" data-kid="'+id+'"'+(i===n-1?' disabled':'')+'>▶</button>'
+    +'<button class="del" data-wact="kdel" data-kid="'+id+'">×</button>'
+    +'</div>';
+}
+function renderHome(){
+  var el=document.getElementById('dash-content');
+  if(!el||!layout) return;
+  var L=editMode?draft:layout;
+  var h='';
+  if(editMode){
+    h+='<div class="home-bar edit"><div class="hb-l">✎ <strong>Customising</strong> · use ◀ ▶ to reorder, ↔ ↕ to resize, × to remove</div><div class="hb-r">'
+      +'<button class="hb-btn" data-wact="addw">＋ Widget</button>'
+      +'<button class="hb-btn" data-wact="addk">＋ KPI</button>'
+      +'<button class="hb-btn'+(resetArmed?' warn':'')+'" data-wact="reset">'+(resetArmed?'Click again to confirm reset':'↺ Reset to role default')+'</button>'
+      +'<button class="hb-btn" data-wact="cancel">Cancel</button>'
+      +'<button class="hb-btn primary" data-wact="save">✓ Save layout</button></div></div>';
+  } else {
+    h+='<div class="home-bar"><div class="hb-l"><strong>'+ROLE_LABELS[currentRole]+'</strong> · starting layout — make it yours with Customise</div><div class="hb-r">'
+      +'<span class="hb-mode">'+(isDemoMode?'⚡ Demo Mode':'🔒 SSO Verified')+'</span>'
+      +'<button class="hb-btn primary" data-wact="edit">✎ Customise</button></div></div>';
+  }
+  if(L.kpis.length||editMode){
+    h+='<div class="kpi-row">';
+    L.kpis.forEach(function(id,i){
+      h+='<div class="kcell'+(editMode?' editing':'')+'">'+(editMode?kctl(id,i,L.kpis.length):'')+kpiHtml(id)+'</div>';
+    });
+    if(!L.kpis.length) h+='<div class="empty-slot">No KPIs yet — click ＋ KPI</div>';
+    h+='</div>';
+  }
+  h+='<div class="wgrid">';
+  L.widgets.forEach(function(w,i){
+    h+='<div class="wcell'+(editMode?' editing':'')+'" style="grid-column:span '+w.w+';grid-row:span '+w.h+'">'
+      +(editMode?wctl(w,i,L.widgets.length):'')+widgetBody(w)+'</div>';
+  });
+  if(!L.widgets.length) h+='<div class="empty-slot" style="grid-column:span 3">Nothing here yet — click Customise, then ＋ Widget.</div>';
+  h+='</div>';
+  el.innerHTML=h;
+  renderTasks('urgent');
+  attachTaskTabListeners();
+}
+
+// ---------- Events (delegated) ----------
+function findIdx(arr,uid){for(var i=0;i<arr.length;i++){if(arr[i].uid===uid)return i;}return -1;}
+function swap(arr,i,j){if(j<0||j>=arr.length)return;var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+function homeClick(e){
+  var b=e.target.closest?e.target.closest('[data-wact]'):null;
+  if(!b) return;
+  var act=b.getAttribute('data-wact'), uid=b.getAttribute('data-uid'), kid=b.getAttribute('data-kid');
+  var L=editMode?draft:layout, i;
+  if(act==='edit'){draft=JSON.parse(JSON.stringify(layout));editMode=true;resetArmed=false;renderHome();return;}
+  if(act==='cancel'){editMode=false;draft=null;resetArmed=false;renderHome();return;}
+  if(act==='save'){layout=draft;draft=null;editMode=false;resetArmed=false;saveLayout();renderHome();return;}
+  if(act==='reset'){
+    if(!resetArmed){resetArmed=true;renderHome();return;}
+    draft=makeDefault(currentRole);resetArmed=false;renderHome();return;
+  }
+  if(act==='addw'){openPicker('w');return;}
+  if(act==='addk'){openPicker('k');return;}
+  if(act==='pbiopen'){var it=b.getAttribute('data-item');var lb=it;CATALOGUE.forEach(function(c){if(c.id===it)lb=c.label;});openPBIView(it,lb);return;}
+  if(act==='pbisave'){
+    var inp=document.querySelector('[data-pbiurl="'+uid+'"]');
+    var idx=findIdx(L.widgets,uid), url=inp?inp.value.trim():'';
+    if(idx>-1&&url){var urls=getPBIUrls();urls[L.widgets[idx].opt]=url;setPBIUrls(urls);renderHome();}
+    return;
+  }
+  if(!editMode) return;
+  if(uid){
+    i=findIdx(draft.widgets,uid); if(i<0) return;
+    if(act==='wleft') swap(draft.widgets,i,i-1);
+    else if(act==='wright') swap(draft.widgets,i,i+1);
+    else if(act==='wwide') draft.widgets[i].w=draft.widgets[i].w%3+1;
+    else if(act==='wtall') draft.widgets[i].h=draft.widgets[i].h%2+1;
+    else if(act==='wdel') draft.widgets.splice(i,1);
+    renderHome();return;
+  }
+  if(kid){
+    i=draft.kpis.indexOf(kid); if(i<0) return;
+    if(act==='kleft'&&i>0){var t=draft.kpis[i];draft.kpis[i]=draft.kpis[i-1];draft.kpis[i-1]=t;}
+    else if(act==='kright'&&i<draft.kpis.length-1){var t2=draft.kpis[i];draft.kpis[i]=draft.kpis[i+1];draft.kpis[i+1]=t2;}
+    else if(act==='kdel') draft.kpis.splice(i,1);
+    renderHome();return;
+  }
+}
+function homeChange(e){
+  var uid=e.target.getAttribute?e.target.getAttribute('data-wsel'):null;
+  if(!uid) return;
+  var L=editMode?draft:layout;
+  var i=findIdx(L.widgets,uid); if(i<0) return;
+  L.widgets[i].opt=e.target.value;
+  if(!editMode) saveLayout();
+  renderHome();
+}
+function homeInput(e){
+  var uid=e.target.getAttribute?e.target.getAttribute('data-note'):null;
+  if(uid) lsSet('pmcc_note_'+uid,e.target.value);
+}
+
+// ---------- Add-widget / add-KPI picker ----------
+function openPicker(kind){
+  pickKind=kind;
+  document.getElementById('pick-title').textContent=kind==='w'?'＋ Add a Widget':'＋ Add a KPI';
+  renderPicker();
+  document.getElementById('pick-modal').classList.add('open');
+}
+function closePicker(){document.getElementById('pick-modal').classList.remove('open');}
+function renderPicker(){
+  var h='', items=pickKind==='w'?WIDGET_CAT:KPI_CAT;
+  items.forEach(function(it){
+    var used=false;
+    if(pickKind==='w'){ if(!it.multi){draft.widgets.forEach(function(w){if(w.id===it.id)used=true;});} }
+    else { used=draft.kpis.indexOf(it.id)>-1; }
+    h+='<div class="modal-item pk'+(used?' used':'')+'" data-pick="'+it.id+'">'
+      +'<div class="pk-ic">'+(it.icon||'▣')+'</div>'
+      +'<div class="pk-tx"><div class="pk-t">'+hesc(it.label)+'</div><div class="pk-d">'+hesc(it.desc)+'</div></div>'
+      +'<div class="pk-st">'+(used?'✓ Added':'＋ Add')+'</div></div>';
+  });
+  document.getElementById('pick-list').innerHTML=h;
+}
+function pickClick(e){
+  var row=e.target.closest?e.target.closest('[data-pick]'):null;
+  if(!row||!editMode) return;
+  var id=row.getAttribute('data-pick');
+  if(pickKind==='w'){
+    var m=wmeta(id); if(!m) return;
+    if(!m.multi){for(var i=0;i<draft.widgets.length;i++){if(draft.widgets[i].id===id)return;}}
+    draft.widgets.push({uid:newUid(),id:id,w:m.w,h:m.h,opt:''});
+  } else {
+    if(draft.kpis.indexOf(id)>-1) return;
+    draft.kpis.push(id);
+  }
+  renderHome();renderPicker();
+}
+
+// ---------- Assistant slot (right column) ----------
+var AS_URL='pmcc_assistant_url', AS_MODE='pmcc_assistant_mode';
+function applyAssistant(){
+  var url=lsGet(AS_URL), mode=lsGet(AS_MODE);
+  var embed=(mode==='embed'&&/^https:\/\//i.test(url));
+  var panel=document.getElementById('assist-panel');
+  document.getElementById('lava-builtin').style.display=embed?'none':'flex';
+  document.getElementById('lava-embed').style.display=embed?'flex':'none';
+  if(embed){panel.classList.add('wide');var f=document.getElementById('assist-frame');if(f.getAttribute('data-src')!==url){f.src=url;f.setAttribute('data-src',url);}}
+  else{panel.classList.remove('wide');}
+  document.getElementById('lp-name-txt').textContent=embed?'My Assistant':'Checkonit';
+}
+function openAssistSettings(){
+  var dd=document.getElementById('u-dd'), chip=document.getElementById('t-user');
+  if(dd) dd.classList.remove('open'); if(chip) chip.classList.remove('open');
+  document.getElementById('as-url').value=lsGet(AS_URL);
+  document.getElementById('as-mode').value=lsGet(AS_MODE)==='embed'?'embed':'builtin';
+  document.getElementById('as-err').textContent='';
+  document.getElementById('assist-modal').classList.add('open');
+}
+function closeAssistSettings(){document.getElementById('assist-modal').classList.remove('open');}
+function saveAssistSettings(){
+  var url=document.getElementById('as-url').value.trim();
+  var mode=document.getElementById('as-mode').value;
+  var err=document.getElementById('as-err');
+  if(mode==='embed'&&!/^https:\/\//i.test(url)){err.textContent='Enter a full https:// link to your assistant to embed it.';return;}
+  lsSet(AS_URL,url);lsSet(AS_MODE,mode);
+  applyAssistant();closeAssistSettings();
+}
+function useBuiltinAssistant(){lsSet(AS_MODE,'builtin');applyAssistant();}
+function openAssistTab(){var u=lsGet(AS_URL);if(u)window.open(u,'_blank');}
+
+function initHomeEvents(){
+  var dc=document.getElementById('dash-content');
+  dc.addEventListener('click',homeClick);
+  dc.addEventListener('change',homeChange);
+  dc.addEventListener('input',homeInput);
+  document.getElementById('pick-list').addEventListener('click',pickClick);
+}
+
+// ════════════════════════════════════════════════════
+//  MOCK DATA — mirrors SharePoint data files
+//  Replace with: fetch('/sites/PMCC-DataFeed/file.json')
+// ════════════════════════════════════════════════════
+var LIVE_DATA = {
+  attendance: {
+    pillar_rate: 94, target: 90,
+    at_risk_classes: [
+      {code:'DM301', name:'Digital Marketing Advanced', rate:72, date:'Wed 13 Jul', facilitator:'Sarah Tan'},
+      {code:'BD201', name:'Business Dev Fundamentals',  rate:68, date:'Thu 14 Jul', facilitator:'James Lim'},
+      {code:'EC401', name:'E-Commerce Strategy',        rate:78, date:'Fri 15 Jul', facilitator:'May Wong'},
+    ],
+    absent_learners_count: 12,
+  },
+  assessments: {
+    completion_rate: 82, target: 85, total_overdue: 31,
+    overdue: [
+      {cohort:'DM301-B12', count:8,  due:'10 Jul', facilitator:'Sarah Tan'},
+      {cohort:'AI201-B05', count:14, due:'08 Jul', facilitator:'John Ng'},
+      {cohort:'EC301-B08', count:9,  due:'11 Jul', facilitator:'May Wong'},
+    ],
+    due_this_week: [
+      {cohort:'BD201-B03', count:12, due:'16 Jul'},
+      {cohort:'DM401-B07', count:6,  due:'17 Jul'},
+    ],
+  },
+  soc: {
+    total: 35, delayed: 5,
+    this_week: [
+      {cohort:'DM301-B12', datetime:'Mon 13 Jul 09:00', room:'A204', status:'confirmed'},
+      {cohort:'AI201-B05', datetime:'Tue 14 Jul 14:00', room:'TBC',  status:'pending'},
+      {cohort:'EC301-B08', datetime:'Wed 15 Jul 10:00', room:'B101', status:'confirmed'},
+      {cohort:'BD201-B03', datetime:'Fri 16 Jul 09:00', room:'TBC',  status:'pending'},
+    ],
+  },
+  finance: {
+    revenue_actual: 789, revenue_target: 1470, revenue_pct: 53.7,
+    outstanding_cohorts: [
+      {cohort:'PDDI-0424', amount:'$12,400', days_overdue:22},
+      {cohort:'PDDM-0524', amount:'$8,200',  days_overdue:14},
+    ],
+  },
+  withdrawals: {
+    rate: 11, target: 8, mom_change: 0.46,
+    at_risk_learners: [
+      {cohort:'DM301-B12', count:3, reason:'Low Attendance'},
+      {cohort:'AI201-B05', count:2, reason:'Missed Assessments'},
+      {cohort:'BD201-B03', count:3, reason:'Low Engagement'},
+    ],
+  },
+  surveys: {
+    score: 79.02, target: 80, response_rate: 85,
+    low_response_cohorts: [
+      {cohort:'EC301-B08', rate:58},
+      {cohort:'DM401-B07', rate:62},
+    ],
+  },
+};
+
+// ════════════════════════════════════════════════════
+//  AUTO-TASK ENGINE
+//  Reads LIVE_DATA and generates tasks from rules.
+//  No user input needed — data drives everything.
+// ════════════════════════════════════════════════════
+function generateAutoTasks(role) {
+  var urgent=[], today=[], week=[];
+  var d = LIVE_DATA;
+
+  // ATTENDANCE RULES
+  d.attendance.at_risk_classes.forEach(function(cls) {
+    if (cls.rate < 70) {
+      urgent.push({icon:'🚨', cat:'Attendance', pri:'urgent',
+        txt: cls.code+' attendance critical — '+cls.rate+'% on '+cls.date+' · Contact '+cls.facilitator+' now',
+        source:'Attendance Data'});
+    } else if (cls.rate < 80) {
+      today.push({icon:'👥', cat:'Attendance', pri:'high',
+        txt: cls.code+' attendance low at '+cls.rate+'% ('+cls.date+') — send reminder to '+cls.facilitator,
+        source:'Attendance Data'});
+    }
+  });
+  if (d.attendance.absent_learners_count > 0) {
+    today.push({icon:'📋', cat:'Attendance', pri:'high',
+      txt: d.attendance.absent_learners_count+' learners absent this week — verify follow-up actions are taken',
+      source:'Student MSR'});
+  }
+
+  // ASSESSMENT RULES
+  d.assessments.overdue.forEach(function(a) {
+    if (a.count >= 10) {
+      urgent.push({icon:'⚠', cat:'Assessment', pri:'urgent',
+        txt: a.cohort+': '+a.count+' overdue submissions (was due '+a.due+') — escalate to '+a.facilitator,
+        source:'Assessment Data'});
+    } else {
+      today.push({icon:'◑', cat:'Assessment', pri:'high',
+        txt: a.cohort+': '+a.count+' overdue submissions — follow up with '+a.facilitator,
+        source:'Assessment Data'});
+    }
+  });
+  d.assessments.due_this_week.forEach(function(a) {
+    week.push({icon:'📅', cat:'Assessment', pri:'med',
+      txt: a.cohort+': '+a.count+' assessments due '+a.due+' — remind learners to submit on time',
+      source:'Assessment Data'});
+  });
+
+  // SOC RULES
+  d.soc.this_week.forEach(function(s) {
+    if (s.status === 'pending') {
+      today.push({icon:'🚀', cat:'SOC', pri:'high',
+        txt: s.cohort+' SOC on '+s.datetime+' — Room '+s.room+' — confirmation still pending',
+        source:'SOC Schedule'});
+    } else {
+      week.push({icon:'✓', cat:'SOC', pri:'low',
+        txt: s.cohort+' SOC confirmed: '+s.datetime+' · Room '+s.room,
+        source:'SOC Schedule'});
+    }
+  });
+  if (d.soc.delayed > 0) {
+    today.push({icon:'⏱', cat:'SOC', pri:'high',
+      txt: d.soc.delayed+' SOC sessions delayed this week — review and reschedule',
+      source:'SOC Schedule'});
+  }
+
+  // FINANCE RULES (PM only)
+  if (role === 'PM') {
+    today.push({icon:'💰', cat:'Finance', pri: d.finance.revenue_pct < 60 ? 'urgent' : 'med',
+      txt: 'Revenue at $'+d.finance.revenue_actual+'K / $'+d.finance.revenue_target+'K target ('+d.finance.revenue_pct+'% achieved) — mid-month review',
+      source:'Finance IPO File'});
+    d.finance.outstanding_cohorts.forEach(function(f) {
+      today.push({icon:'🏦', cat:'Finance', pri:'high',
+        txt: f.cohort+' has '+f.amount+' outstanding fees — '+f.days_overdue+' days overdue',
+        source:'Finance IPO File'});
+    });
+  }
+
+  // WITHDRAWAL RULES
+  if (d.withdrawals.rate > d.withdrawals.target) {
+    week.push({icon:'↓', cat:'Withdrawal', pri:'high',
+      txt: 'Withdrawal rate at '+d.withdrawals.rate+'% vs '+d.withdrawals.target+'% target — up '+d.withdrawals.mom_change+'% MoM · Review trends',
+      source:'Student MSR'});
+  }
+  d.withdrawals.at_risk_learners.forEach(function(w) {
+    week.push({icon:'🔔', cat:'Withdrawal', pri:'med',
+      txt: w.cohort+': '+w.count+' learners flagged for withdrawal risk · Reason: '+w.reason,
+      source:'Student MSR'});
+  });
+
+  // SURVEY RULES
+  if (d.surveys.score < d.surveys.target) {
+    week.push({icon:'⭐', cat:'Survey', pri:'med',
+      txt: 'Pillar survey score at '+d.surveys.score+'/90 — below '+d.surveys.target+' target · Review low-scoring themes',
+      source:'Survey Data'});
+  }
+  d.surveys.low_response_cohorts.forEach(function(s) {
+    week.push({icon:'◍', cat:'Survey', pri:'med',
+      txt: s.cohort+' survey response at '+s.rate+'% — send reminder to increase response rate',
+      source:'Survey Data'});
+  });
+
+  // ROLE FILTER
+  if (role !== 'PM') {
+    var noFinance = function(t){return t.cat !== 'Finance';};
+    urgent = urgent.filter(noFinance);
+    today  = today.filter(noFinance);
+    week   = week.filter(noFinance);
+  }
+  if (role === 'LS') {
+    var lsOnly = function(t){return t.cat==='SOC'||t.cat==='Attendance';};
+    urgent = urgent.filter(lsOnly);
+    today  = today.filter(lsOnly);
+    week   = week.filter(lsOnly);
+  }
+  return {urgent:urgent, today:today, week:week};
+}
+
+var currentTaskFilter = 'urgent';
+
+function renderTasksPanel(){
+  var tasks = generateAutoTasks(currentRole);
+  var uc=tasks.urgent.length, tc=tasks.today.length, wc=tasks.week.length;
+  var total=uc+tc+wc;
+  return '<div class="panel" id="task-panel">'
+    +'<div class="ph">'
+    +'<div class="ph-title">Auto-Tasks'
+    +'<span style="font-size:9px;font-weight:700;background:var(--red);color:#fff;padding:1px 6px;border-radius:8px;margin-left:5px">'+total+'</span>'
+    +'</div>'
+    +'<div style="font-size:9px;color:var(--green);display:flex;align-items:center;gap:4px">'
+    +'<span style="width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block"></span>Live from data</div>'
+    +'</div>'
+    +'<div class="task-source-note">Auto-generated from programme data · No manual input needed</div>'
+    +'<div class="task-filter-tabs">'
+    +'<button class="tf-tab active" data-tf="urgent">🔴 Urgent ('+uc+')</button>'
+    +'<button class="tf-tab" data-tf="today">📋 Today ('+tc+')</button>'
+    +'<button class="tf-tab" data-tf="week">📅 Week ('+wc+')</button>'
+    +'</div>'
+    +'<div class="auto-task-list" id="task-list"></div>'
+    +'</div>';
+}
+
+function renderTasks(filter) {
+  currentTaskFilter = filter || currentTaskFilter;
+  var el = document.getElementById('task-list');
+  if (!el) return;
+  var tasks = generateAutoTasks(currentRole);
+  var list = tasks[currentTaskFilter] || [];
+  if (!list.length) {
+    el.innerHTML = '<div class="no-tasks">✅ No '+currentTaskFilter+' tasks — all clear!</div>';
+    return;
+  }
+  var priColors = {urgent:'var(--red)',high:'var(--gold)',med:'var(--blue)',low:'var(--green)'};
+  var priBgs    = {urgent:'var(--red-bg)',high:'var(--gold-bg)',med:'var(--blue-bg)',low:'var(--green-bg)'};
+  var priBds    = {urgent:'var(--red-border)',high:'var(--gold-border)',med:'var(--blue-border)',low:'var(--green-border)'};
+  el.innerHTML = list.map(function(t,i) {
+    var pc=priColors[t.pri]||'var(--text3)';
+    var pb=priBgs[t.pri]||'var(--bg4)';
+    var pd=priBds[t.pri]||'var(--border)';
+    return '<div class="auto-task-item" data-idx="'+i+'">'
+      +'<div class="at-top">'
+      +'<span class="at-icon">'+t.icon+'</span>'
+      +'<span class="at-cat" style="color:'+pc+';background:'+pb+';border:1px solid '+pd+'">'+t.cat+'</span>'
+      +'<span class="at-pri" style="color:'+pc+'">'+t.pri.toUpperCase()+'</span>'
+      +'</div>'
+      +'<div class="at-txt">'+t.txt+'</div>'
+      +'<div class="at-bottom">'
+      +'<span class="at-src">📂 '+t.source+'</span>'
+      +'<button class="at-done-btn" data-idx="'+i+'" onclick="markDone('+i+',this)">Mark done →</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function switchTaskFilter(filter, el) {
+  document.querySelectorAll('.tf-tab').forEach(function(b){b.classList.remove('active');});
+  if (el) el.classList.add('active');
+  renderTasks(filter);
+}
+// Delegated listener for task filter tabs (attached after dashboard renders)
+function attachTaskTabListeners() {
+  var panel = document.getElementById('task-panel');
+  if (!panel) return;
+  var tabsWrap = panel.querySelector('.task-filter-tabs');
+  if (!tabsWrap) return;
+  tabsWrap.onclick = function(e) {
+    var btn = e.target.closest('.tf-tab');
+    if (!btn) return;
+    switchTaskFilter(btn.getAttribute('data-tf'), btn);
+  };
+}
+
+function markDone(idx, btn) {
+  var item = btn.closest('.auto-task-item');
+  if (item) { item.style.opacity='0.35'; item.style.textDecoration='line-through'; }
+  btn.textContent='✓ Done'; btn.disabled=true;
+  // notify LAVA
+  var tasks=generateAutoTasks(currentRole);
+  var list=tasks[currentTaskFilter]||[];
+  var t=list[idx];
+  if(t){ addUserMsg('Done: '+t.txt); callLAVA('I just completed this task: "'+t.txt+'". What should I prioritise next?'); }
+}
+
+function switchTab(tab,el){switchTaskFilter(tab,el);}
+
+function renderAlertsPanel(){
+  return '<div class="panel">'
+    +'<div class="ph"><div class="ph-title">AI Insights &amp; Alerts</div><div class="ph-link">View all →</div></div>'
+    +'<div class="mini-stats">'
+    +'<div class="ms"><div class="ms-lbl">Upcoming Assessments</div><div class="ms-val gold">14</div><div class="ms-sub">Next 7 days</div></div>'
+    +'<div class="ms"><div class="ms-lbl">Overdue</div><div class="ms-val red">31</div><div class="ms-sub">Needs action now</div></div>'
+    +'</div>'
+    +'<div class="sec-lbl">Live Alerts</div>'
+    +'<div class="scroll-list">'
+    +al('crit','⚠','5 classes at risk of low attendance — follow-up required today','Just now · High Priority')
+    +al('crit','⚠','31 assessments overdue — learner escalation needed','2 hrs ago · High Priority')
+    +al('warn','△','Withdrawal rate up 0.46% MoM — trend watch active','Today · Monitor')
+    +al('warn','△','Revenue at 53.7% of target — mid-month review due','Today · Finance')
+    +al('info','◉','3 SOC cohorts this week — 1 confirmation pending','Today · SOC')
+    +al('good','✓','Survey score improving — Q1 response rate 85%','Today · Good News')
+    +'</div></div>';
+}
+function al(cls,ico,txt,meta){return '<div class="alert-item '+cls+'"><div class="ai-ico">'+ico+'</div><div><div class="ai-txt">'+txt+'</div><div class="ai-meta">'+meta+'</div></div></div>';}
+
+function renderQABar(){
+  document.getElementById('qa-bar').innerHTML=
+    ['📊 Power BI Reports','◑ Scorecards','◷ Class Calendar','◍ Learner Feedback','≡ Reports']
+    .map(function(b){return '<button class="qa-btn">'+b+'</button>';}).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  TOPBAR DROPDOWN
+// ════════════════════════════════════════════════════
+function toggleDD(e){
+  e.stopPropagation();
+  var chip=document.getElementById('t-user');
+  var dd=document.getElementById('u-dd');
+  var open=dd.classList.contains('open');
+  if(open){dd.classList.remove('open');chip.classList.remove('open');}
+  else{dd.classList.add('open');chip.classList.add('open');}
+}
+
+// ════════════════════════════════════════════════════
+//  Checkonit
+// ════════════════════════════════════════════════════
+var lavaHistory=[];
+var lavaBusy=false;
+window._lavaSystem='';
+function buildLavaSys() {
+  var d = LIVE_DATA;
+  var tasks = generateAutoTasks(currentRole);
+  return 'You are Checkonit, the Lithan Academy programme assistant, an AI programme intelligence co-pilot at Lithan Academy Singapore, Digital Business Pillar. You are sharp, proactive, and data-driven. Always be concise and action-oriented. Use bullet points for lists.'
+    + ' Current user role: ' + (ROLE_LABELS[currentRole]||currentRole) + '.'
+    + ' Today: ' + new Date().toDateString() + '.'
+    + ' LIVE PROGRAMME DATA:'
+    + ' Attendance: ' + d.attendance.pillar_rate + '% (target ' + d.attendance.target + '%). At-risk classes: ' + d.attendance.at_risk_classes.map(function(c){return c.code+' '+c.rate+'%';}).join(', ') + '.'
+    + ' ' + d.attendance.absent_learners_count + ' absent learners this week.'
+    + ' Assessments: ' + d.assessments.completion_rate + '% completion (target ' + d.assessments.target + '%). Total overdue: ' + d.assessments.total_overdue + '.'
+    + ' Overdue by cohort: ' + d.assessments.overdue.map(function(a){return a.cohort+' ('+a.count+')';}).join(', ') + '.'
+    + ' SOC: ' + d.soc.total + ' cohorts this week, ' + d.soc.delayed + ' delayed. Pending confirmation: ' + d.soc.this_week.filter(function(s){return s.status==='pending';}).map(function(s){return s.cohort;}).join(', ') + '.'
+    + ' Finance: Revenue $' + d.finance.revenue_actual + 'K of $' + d.finance.revenue_target + 'K target (' + d.finance.revenue_pct + '%). Outstanding: ' + d.finance.outstanding_cohorts.map(function(f){return f.cohort+' '+f.amount;}).join(', ') + '.'
+    + ' Withdrawals: ' + d.withdrawals.rate + '% rate (target ' + d.withdrawals.target + '%, up ' + d.withdrawals.mom_change + '% MoM). At-risk: ' + d.withdrawals.at_risk_learners.map(function(w){return w.cohort+' ('+w.count+', '+w.reason+')';}).join(', ') + '.'
+    + ' Survey: ' + d.surveys.score + '/90 (target ' + d.surveys.target + '). Response rate ' + d.surveys.response_rate + '%. Low response: ' + d.surveys.low_response_cohorts.map(function(s){return s.cohort+' '+s.rate+'%';}).join(', ') + '.'
+    + ' AUTO-GENERATED TASKS TODAY: Urgent (' + tasks.urgent.length + '): ' + tasks.urgent.map(function(t){return t.txt;}).join(' | ') + '.'
+    + ' Today (' + tasks.today.length + '): ' + tasks.today.map(function(t){return t.txt;}).join(' | ') + '.'
+    + ' This week (' + tasks.week.length + '): ' + tasks.week.map(function(t){return t.txt;}).join(' | ') + '.'
+    + ' When answering, reference the specific data above. If the user marks a task done, acknowledge it and suggest what to prioritise next based on the remaining tasks.';
+}
+var LAVA_SYS = ''; // built dynamically in initLAVA
+
+function initLAVA(){
+  lavaHistory=[];
+  window._lavaSystem = buildLavaSys();
+  document.getElementById('lp-msgs').innerHTML='';
+  var chips=ROLE_CHIPS[currentRole]||ROLE_CHIPS.PM;
+  document.getElementById('lp-chips').innerHTML=chips.slice(0,3).map(function(c){
+    return '<div class="lp-chip" onclick="quickSend(this.textContent)">'+c+'</div>';
+  }).join('');
+  var name=currentUser.name.split(' ')[0];
+  var greet={
+    PM:'Good day, <strong>'+name+'</strong>. I\'m <strong>Checkonit</strong>.<br><br>🔴 <strong>Urgent today:</strong><br>• 5 classes at low attendance risk<br>• 31 overdue assessments need escalation<br>• Withdrawal at 11% vs 8% target ↑<br><br>📊 Revenue at 53.7% of target. Attendance 94% ✅<br><br>Click any <strong>PBI dashboard</strong> in the sidebar to open it, or ask me anything.',
+    LF:'Good day, <strong>'+name+'</strong>! I\'m <strong>Checkonit</strong>.<br><br>📋 DM301 today at 09:00 · 3 overdue assessments · 2 absent learners need follow-up.<br><br>Click any PBI report in the sidebar to view live data.',
+    LA:'Good day, <strong>'+name+'</strong>. I\'m <strong>Checkonit</strong>.<br><br>📋 SOC room for AI201 still TBC · 12 learners need attendance follow-up · 8 withdrawal risk flags.<br><br>Click any PBI report in the sidebar to view live data.',
+    LS:'Good day, <strong>'+name+'</strong>. I\'m <strong>Checkonit</strong>.<br><br>📋 6 classes today · SOC room TBC for 10:00 · 3 tasks pending.<br><br>Click any PBI report in the sidebar to view live data.',
+  };
+  setTimeout(function(){addBotMsg(greet[currentRole]||greet.PM);},600);
+}
+function addBotMsg(html){addLavaMsg('bot',html);}
+function addUserMsg(txt){addLavaMsg('user',txt);}
+function addLavaMsg(role,html){
+  var box=document.getElementById('lp-msgs');
+  var d=document.createElement('div');
+  d.className='lp-msg '+role;
+  d.innerHTML='<div class="lp-sender">'+(role==='bot'?'Checkonit':'You')+'</div><div class="lp-bubble">'+html+'</div>';
+  box.appendChild(d);
+  box.scrollTop=box.scrollHeight;
+}
+function showTyping(){
+  var box=document.getElementById('lp-msgs');
+  var d=document.createElement('div');
+  d.id='lp-typing';d.className='lp-msg bot';
+  d.innerHTML='<div class="lp-sender">Checkonit</div><div class="lp-typing"><span></span><span></span><span></span></div>';
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+function hideTyping(){var e=document.getElementById('lp-typing');if(e)e.remove();}
+async function callLAVA(msg){
+  if(lavaBusy) return;lavaBusy=true;
+  lavaHistory.push({role:'user',content:msg});
+  showTyping();
+  try{
+    var r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
+        system:window._lavaSystem||buildLavaSys(),
+        messages:lavaHistory})
+    });
+    var d=await r.json();
+    var reply=(d.content&&d.content[0]&&d.content[0].text)||'Unable to respond. Please try again.';
+    hideTyping();
+    addBotMsg(reply.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>'));
+    lavaHistory.push({role:'assistant',content:reply});
+  }catch(e){hideTyping();addBotMsg('⚠ Connection error. Please check your network.');}
+  lavaBusy=false;
+}
+function sendMsg(){
+  var inp=document.getElementById('lp-input');
+  var txt=inp.value.trim();if(!txt) return;
+  addUserMsg(txt);inp.value='';callLAVA(txt);
+}
+function quickSend(txt){addUserMsg(txt);callLAVA(txt);}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+function focusLAVA(){document.getElementById('lp-input').focus();}
+
+// CLOCK
+function tick(){
+  var el=document.getElementById('clock');if(!el) return;
+  var n=new Date();
+  el.innerHTML=n.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',year:'numeric'})
+    +'<br>'+n.toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+// ════════════════════════════════════════════════════
+//  V7 MOCK DATA EXTENSIONS (mirror future SharePoint files)
+// ════════════════════════════════════════════════════
+LIVE_DATA.classes_week=[
+  {code:'DM301',name:'Digital Marketing Advanced',day:'Mon 13 Jul',time:'09:00',room:'A204',att:72},
+  {code:'BD201',name:'Business Dev Fundamentals', day:'Tue 14 Jul',time:'14:00',room:'B101',att:68},
+  {code:'EC401',name:'E-Commerce Strategy',       day:'Wed 15 Jul',time:'10:00',room:'A305',att:91},
+  {code:'AI201',name:'AI for Business',           day:'Thu 16 Jul',time:'09:00',room:'B204',att:85},
+  {code:'DM401',name:'Digital Analytics',         day:'Fri 17 Jul',time:'13:00',room:'A204',att:88}
+];
+LIVE_DATA.today_classes=[
+  {time:'09:00',code:'DM301-B12',room:'A204',facilitator:'Sarah Tan',status:'done'},
+  {time:'10:30',code:'EC301-B08',room:'B101',facilitator:'May Wong', status:'ongoing'},
+  {time:'13:00',code:'AI201-B05',room:'TBC', facilitator:'John Ng',  status:'upcoming'},
+  {time:'14:30',code:'BD201-B03',room:'A305',facilitator:'James Lim',status:'upcoming'},
+  {time:'16:00',code:'DM401-B07',room:'A204',facilitator:'Sarah Tan',status:'upcoming'},
+  {time:'18:30',code:'EC401-B02',room:'B204',facilitator:'May Wong', status:'upcoming'}
+];
+// Learner IDs are masked — PDPA: the dashboard never needs full IDs or names
+LIVE_DATA.followups=[
+  {id:'S****41',cohort:'DM301-B12',absent:3,last:'Mon 06 Jul'},
+  {id:'S****87',cohort:'BD201-B03',absent:2,last:'Tue 07 Jul'},
+  {id:'S****15',cohort:'AI201-B05',absent:2,last:'Wed 08 Jul'},
+  {id:'S****63',cohort:'DM301-B12',absent:4,last:'Fri 03 Jul'},
+  {id:'S****29',cohort:'EC301-B08',absent:2,last:'Tue 07 Jul'}
+];
+
+initHomeEvents();
+</script>
+</body>
+</html>
